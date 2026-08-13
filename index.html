@@ -1,113 +1,30 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="theme-color" content="#f5f1e8" />
-<title>一字決まり 3択トレーニング</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f3efe5"><title>一字決まり 3択トレーニング</title>
 <style>
-  :root{
-    --bg:#f5f1e8;
-    --paper:#fffdf7;
-    --ink:#161616;
-    --green:#2f6f4e;
-    --green-dark:#214e38;
-    --ok:#156f43;
-    --ng:#a6382c;
-    --muted:#6f6a61;
-    --shadow:0 8px 24px rgba(0,0,0,.08);
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
-  body{min-height:100dvh}
-  button{font:inherit}
-  .app{max-width:520px;min-height:100dvh;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column}
-  .topbar{display:flex;justify-content:space-between;align-items:center;min-height:38px}
-  .brand{font-weight:800;font-size:15px;letter-spacing:.04em}
-  .progress{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
-  .prompt-wrap{text-align:center;margin:14px 0 16px}
-  .label{font-size:13px;color:var(--muted);margin-bottom:2px}
-  .prompt{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:78px;line-height:1;font-weight:700;letter-spacing:.05em}
-  .hint{font-size:12px;color:var(--muted);margin-top:7px}
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:stretch}
-  .card{appearance:none;border:4px solid var(--green);border-radius:3px;background:var(--paper);min-height:325px;padding:12px 7px;box-shadow:var(--shadow);position:relative;touch-action:manipulation;transition:transform .08s ease, border-color .08s ease, background .08s ease}
-  .card:active{transform:scale(.985)}
-  .card[disabled]{opacity:1}
-  .poem{writing-mode:vertical-rl;text-orientation:upright;font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:24px;line-height:1.48;letter-spacing:.05em;height:285px;margin:auto;white-space:normal}
-  .card.correct{border-color:var(--ok);background:#f0faf4}
-  .card.wrong{border-color:var(--ng);background:#fff3f1}
-  .feedback{min-height:68px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:22px;margin-top:10px;font-variant-numeric:tabular-nums}
-  .feedback.ok{color:var(--ok)}
-  .feedback.ng{color:var(--ng)}
-  .footer-note{margin-top:auto;text-align:center;color:var(--muted);font-size:11px;padding-top:10px}
-  .screen{display:none}
-  .screen.active{display:block}
-  .start, .result{flex:1;display:none;align-items:center;justify-content:center;text-align:center}
-  .start.active,.result.active{display:flex}
-  .panel{width:100%;background:rgba(255,255,255,.55);border:1px solid rgba(47,111,78,.18);border-radius:18px;padding:28px 20px;box-shadow:var(--shadow)}
-  .panel h1{font-size:28px;margin:0 0 8px}
-  .panel p{color:var(--muted);line-height:1.65;margin:8px 0 20px}
-  .primary{width:100%;border:0;border-radius:14px;background:var(--green);color:white;padding:16px;font-size:18px;font-weight:800;box-shadow:0 6px 16px rgba(47,111,78,.18)}
-  .primary:active{background:var(--green-dark)}
-  .mini{font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6}
-  .score{font-size:54px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;margin:12px 0 18px}
-  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 18px}
-  .metric{background:white;border-radius:14px;padding:14px 8px}
-  .metric .num{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums}
-  .metric .cap{font-size:12px;color:var(--muted);margin-top:4px}
-  .weak{margin:10px 0 18px;font-size:13px;color:var(--muted);line-height:1.6}
-  @media (max-width:390px){.app{padding-left:10px;padding-right:10px}.cards{gap:7px}.card{min-height:300px;padding:10px 4px;border-width:3px}.poem{font-size:21px;height:265px;line-height:1.42}.prompt{font-size:70px}}
-</style>
-</head>
-<body>
-<main class="app">
-  <section id="startScreen" class="start active">
-    <div class="panel">
-      <h1>一字決まり<br>3択トレーニング</h1>
-      <p>「む・す・め・ふ・さ・ほ・せ」を見て、対応する下の句札をタップ。<br>10問で反応速度と正答率を測ります。</p>
-      <button id="startBtn" class="primary">トレーニング開始</button>
-      <div class="mini">まずは暗記ではなく「見た瞬間に札を選ぶ」感覚を作る試作版です。</div>
-    </div>
-  </section>
-  <section id="gameScreen" class="screen">
-    <div class="topbar"><div class="brand">一字決まり・3択</div><div id="progress" class="progress">1 / 10</div></div>
-    <div class="prompt-wrap"><div class="label">決まり字</div><div id="prompt" class="prompt">む</div><div class="hint">正しい下の句札をタップ</div></div>
-    <div id="cards" class="cards"></div>
-    <div id="feedback" class="feedback"></div>
-    <div class="footer-note">反応時間は決まり字が表示されてから最初に札をタップするまで</div>
-  </section>
-  <section id="resultScreen" class="result">
-    <div class="panel">
-      <div style="font-size:14px;color:var(--muted);font-weight:700">KARUTA SCORE</div>
-      <div id="score" class="score">0</div>
-      <div class="metrics"><div class="metric"><div id="accuracy" class="num">0%</div><div class="cap">正答率</div></div><div class="metric"><div id="avgTime" class="num">0.00秒</div><div class="cap">平均反応時間</div></div></div>
-      <div id="weak" class="weak"></div>
-      <button id="retryBtn" class="primary">もう一度</button>
-    </div>
-  </section>
-</main>
-<script>
+:root{--bg:#f3efe5;--paper:#fffef9;--ink:#151515;--green:#315f42;--ok:#16804d;--ng:#b43b30;--muted:#746f66}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}body{min-height:100dvh}button{font:inherit}.app{max-width:520px;min-height:100dvh;margin:auto;padding:max(16px,env(safe-area-inset-top)) 12px max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column}.topbar{display:flex;justify-content:space-between;align-items:center;min-height:36px}.brand{font-weight:800;font-size:14px}.progress{font-size:14px;color:var(--muted)}.prompt-wrap{text-align:center;margin:8px 0 13px}.label{font-size:12px;color:var(--muted)}.prompt{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:68px;line-height:1.05;font-weight:700}.hint{font-size:12px;color:var(--muted);margin-top:5px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start}.card{appearance:none;border:0;background:#315f42;padding:8px;border-radius:2px;aspect-ratio:0.72;box-shadow:0 5px 14px rgba(0,0,0,.12);touch-action:manipulation;transition:transform .07s}.card:active{transform:scale(.985)}.card[disabled]{opacity:1}.card-inner{height:100%;width:100%;background:var(--paper);display:flex;justify-content:center;align-items:flex-start;padding:13% 6% 8%;overflow:hidden}.poem-grid{width:100%;height:100%;display:grid;grid-template-columns:repeat(3,1fr);direction:rtl;align-items:start}.poem-col{font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;font-size:clamp(18px,5.5vw,28px);font-weight:500;line-height:1.16;display:flex;flex-direction:column;align-items:center;white-space:nowrap}.poem-char{display:block;height:1.16em}.card.correct{background:var(--ok);box-shadow:0 0 0 3px rgba(22,128,77,.18)}.card.wrong{background:var(--ng);box-shadow:0 0 0 3px rgba(180,59,48,.16)}.feedback{min-height:58px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:20px;margin-top:8px}.feedback.ok{color:var(--ok)}.feedback.ng{color:var(--ng)}.footer-note{margin-top:auto;text-align:center;color:var(--muted);font-size:10px;padding-top:8px}.screen{display:none}.screen.active{display:block}.start,.result{flex:1;display:none;align-items:center;justify-content:center;text-align:center}.start.active,.result.active{display:flex}.panel{width:100%;background:rgba(255,255,255,.6);border-radius:18px;padding:28px 20px;box-shadow:0 8px 24px rgba(0,0,0,.07)}.panel h1{font-size:28px;margin:0 0 8px}.panel p{color:var(--muted);line-height:1.65;margin:8px 0 20px}.primary{width:100%;border:0;border-radius:14px;background:var(--green);color:#fff;padding:16px;font-size:18px;font-weight:800}.mini,.weak{font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6}.score{font-size:54px;font-weight:900;margin:12px 0 18px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}.metric{background:#fff;border-radius:14px;padding:14px 8px}.metric .num{font-size:25px;font-weight:900}.metric .cap{font-size:12px;color:var(--muted);margin-top:4px}@media(max-width:390px){.app{padding-left:8px;padding-right:8px}.cards{gap:6px}.card{padding:6px}.card-inner{padding-top:12%}.poem-col{font-size:clamp(17px,5.35vw,22px)}.prompt{font-size:62px}}
+</style></head><body><main class="app">
+<section id="startScreen" class="start active"><div class="panel"><h1>一字決まり<br>3択トレーニング</h1><p>「む・す・め・ふ・さ・ほ・せ」を見て、対応する取り札をタップ。<br>10問で反応速度と正答率を測ります。</p><button id="startBtn" class="primary">トレーニング開始</button><div class="mini">競技かるたの取り札を意識した、3列縦書きのオリジナル札デザインです。</div></div></section>
+<section id="gameScreen" class="screen"><div class="topbar"><div class="brand">一字決まり・3択</div><div id="progress" class="progress">1 / 10</div></div><div class="prompt-wrap"><div class="label">決まり字</div><div id="prompt" class="prompt">む</div><div class="hint">正しい取り札をタップ</div></div><div id="cards" class="cards"></div><div id="feedback" class="feedback"></div><div class="footer-note">決まり字の表示から最初のタップまでを計測</div></section>
+<section id="resultScreen" class="result"><div class="panel"><div style="font-size:14px;color:var(--muted);font-weight:700">KARUTA SCORE</div><div id="score" class="score">0</div><div class="metrics"><div class="metric"><div id="accuracy" class="num">0%</div><div class="cap">正答率</div></div><div class="metric"><div id="avgTime" class="num">0.00秒</div><div class="cap">平均反応時間</div></div></div><div id="weak" class="weak"></div><button id="retryBtn" class="primary">もう一度</button></div></section>
+</main><script>
 const poems=[
-{key:"む",lower:"きりたちのぼる　あきのゆふぐれ"},
-{key:"す",lower:"ゆめのかよひぢ　ひとめよくらむ"},
-{key:"め",lower:"くもがくれにし　よはのつきかな"},
-{key:"ふ",lower:"むべやまかぜを　あらしといふらむ"},
-{key:"さ",lower:"いづこもおなじ　あきのゆふぐれ"},
-{key:"ほ",lower:"ただありあけの　つきぞのこれる"},
-{key:"せ",lower:"われてもすゑに　あはむとぞおもふ"}
+{key:"む",cols:["きりたちのぼる","あきのゆふぐれ",""]},
+{key:"す",cols:["ゆめのかよひぢ","ひとめよくらむ",""]},
+{key:"め",cols:["くもがくれにし","よはのつきかな",""]},
+{key:"ふ",cols:["むべやまかぜを","あらしといふらむ",""]},
+{key:"さ",cols:["いづこもおなじ","あきのゆふぐれ",""]},
+{key:"ほ",cols:["ただありあけの","つきぞのこれる",""]},
+{key:"せ",cols:["われてもすゑに","あはむとぞおもふ",""]}
 ];
-const TOTAL=10;let order=[],q=0,startTime=0,locked=false,answers=[];
-const $=s=>document.querySelector(s);
-const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-function show(id){["startScreen","gameScreen","resultScreen"].forEach(x=>$("#"+x).classList.remove("active"));$("#"+id).classList.add("active")}
-function buildOrder(){const base=shuffle(poems);const extra=Array.from({length:TOTAL-poems.length},()=>poems[Math.floor(Math.random()*poems.length)]);return shuffle(base.concat(extra))}
-function startGame(){order=buildOrder();q=0;answers=[];show("gameScreen");renderQuestion()}
-function renderQuestion(){locked=false;const current=order[q];$("#progress").textContent=`${q+1} / ${TOTAL}`;$("#prompt").textContent=current.key;$("#feedback").className="feedback";$("#feedback").innerHTML="";const distractors=shuffle(poems.filter(p=>p.key!==current.key)).slice(0,2);const options=shuffle([current,...distractors]);const cards=$("#cards");cards.innerHTML="";options.forEach(p=>{const b=document.createElement("button");b.className="card";b.dataset.key=p.key;b.setAttribute("aria-label",p.lower);const t=document.createElement("div");t.className="poem";t.textContent=p.lower;b.appendChild(t);b.addEventListener("click",()=>choose(b,p,current));cards.appendChild(b)});requestAnimationFrame(()=>{startTime=performance.now()})}
-function choose(button,picked,current){if(locked)return;locked=true;const sec=(performance.now()-startTime)/1000;const correct=picked.key===current.key;[...document.querySelectorAll(".card")].forEach(b=>{b.disabled=true;if(b.dataset.key===current.key)b.classList.add("correct")});if(!correct)button.classList.add("wrong");answers.push({key:current.key,correct,sec});const f=$("#feedback");f.className="feedback "+(correct?"ok":"ng");f.innerHTML=`${correct?"○ 正解！":"× おしい！"} ${sec.toFixed(2)}秒`;setTimeout(()=>{q++;if(q>=TOTAL)finish();else renderQuestion()},650)}
-function finish(){const correctCount=answers.filter(a=>a.correct).length;const accuracy=correctCount/TOTAL;const avg=answers.reduce((s,a)=>s+a.sec,0)/TOTAL;const speed=Math.max(0,Math.min(1,(4-avg)/3));const score=Math.round((accuracy*0.7+speed*0.3)*10000);$("#score").textContent=score.toLocaleString("ja-JP");$("#accuracy").textContent=Math.round(accuracy*100)+"%";$("#avgTime").textContent=avg.toFixed(2)+"秒";const byKey={};answers.forEach(a=>{if(!byKey[a.key])byKey[a.key]={n:0,ok:0,time:0};byKey[a.key].n++;byKey[a.key].ok+=a.correct?1:0;byKey[a.key].time+=a.sec});const ranked=Object.entries(byKey).map(([key,v])=>({key,rate:v.ok/v.n,avg:v.time/v.n})).sort((a,b)=>(a.rate-b.rate)||(b.avg-a.avg));const weakest=ranked.slice(0,2).map(x=>`「${x.key}」`).join(" と ");$("#weak").textContent=ranked.length?`今回の復習候補：${weakest}`:"";show("resultScreen")}
+function distribute(text){const s=text.replace(/\s/g,"");const n=s.length;const a=Math.ceil(n/3),b=Math.ceil((n-a)/2);return[s.slice(0,a),s.slice(a,a+b),s.slice(a+b)]}
+poems.forEach(p=>{const text=p.cols.join("");p.cols=distribute(text)});
+const TOTAL=10;let order=[],q=0,startTime=0,locked=false,answers=[];const $=s=>document.querySelector(s);const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};function show(id){["startScreen","gameScreen","resultScreen"].forEach(x=>$("#"+x).classList.remove("active"));$("#"+id).classList.add("active")}function buildOrder(){const base=shuffle(poems),extra=Array.from({length:TOTAL-poems.length},()=>poems[Math.floor(Math.random()*poems.length)]);return shuffle(base.concat(extra))}function startGame(){order=buildOrder();q=0;answers=[];show("gameScreen");renderQuestion()}
+function makeCol(text){const d=document.createElement("div");d.className="poem-col";[...text].forEach(c=>{const s=document.createElement("span");s.className="poem-char";s.textContent=c;d.appendChild(s)});return d}
+function renderQuestion(){locked=false;const current=order[q];$("#progress").textContent=`${q+1} / ${TOTAL}`;$("#prompt").textContent=current.key;$("#feedback").className="feedback";$("#feedback").textContent="";const opts=shuffle([current,...shuffle(poems.filter(p=>p.key!==current.key)).slice(0,2)]),cards=$("#cards");cards.innerHTML="";opts.forEach(p=>{const b=document.createElement("button");b.className="card";b.dataset.key=p.key;const inner=document.createElement("div");inner.className="card-inner";const grid=document.createElement("div");grid.className="poem-grid";p.cols.forEach(c=>grid.appendChild(makeCol(c)));inner.appendChild(grid);b.appendChild(inner);b.addEventListener("click",()=>choose(b,p,current));cards.appendChild(b)});requestAnimationFrame(()=>startTime=performance.now())}
+function choose(button,picked,current){if(locked)return;locked=true;const sec=(performance.now()-startTime)/1000,correct=picked.key===current.key;document.querySelectorAll(".card").forEach(b=>{b.disabled=true;if(b.dataset.key===current.key)b.classList.add("correct")});if(!correct)button.classList.add("wrong");answers.push({key:current.key,correct,sec});const f=$("#feedback");f.className="feedback "+(correct?"ok":"ng");f.textContent=`${correct?"○ 正解！":"× おしい！"} ${sec.toFixed(2)}秒`;setTimeout(()=>{q++;q>=TOTAL?finish():renderQuestion()},650)}
+function finish(){const ok=answers.filter(a=>a.correct).length,accuracy=ok/TOTAL,avg=answers.reduce((s,a)=>s+a.sec,0)/TOTAL,speed=Math.max(0,Math.min(1,(4-avg)/3)),score=Math.round((accuracy*.7+speed*.3)*10000);$("#score").textContent=score.toLocaleString("ja-JP");$("#accuracy").textContent=Math.round(accuracy*100)+"%";$("#avgTime").textContent=avg.toFixed(2)+"秒";const m={};answers.forEach(a=>{m[a.key]??={n:0,ok:0,t:0};m[a.key].n++;m[a.key].ok+=a.correct?1:0;m[a.key].t+=a.sec});const r=Object.entries(m).map(([key,v])=>({key,rate:v.ok/v.n,avg:v.t/v.n})).sort((a,b)=>(a.rate-b.rate)||(b.avg-a.avg));$("#weak").textContent="今回の復習候補："+r.slice(0,2).map(x=>`「${x.key}」`).join(" と ");show("resultScreen")}
 $("#startBtn").addEventListener("click",startGame);$("#retryBtn").addEventListener("click",startGame);
-</script>
-</body>
-</html>
+</script></body></html>
