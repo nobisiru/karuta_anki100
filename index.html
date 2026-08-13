@@ -1,30 +1,83 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f3efe5"><title>一字決まり 3択トレーニング</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f3efe5">
+<title>百人一首 決まり字トレーニング</title>
 <style>
-:root{--bg:#f3efe5;--paper:#fffef9;--ink:#151515;--green:#315f42;--ok:#16804d;--ng:#b43b30;--muted:#746f66}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}body{min-height:100dvh}button{font:inherit}.app{max-width:520px;min-height:100dvh;margin:auto;padding:max(16px,env(safe-area-inset-top)) 12px max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column}.topbar{display:flex;justify-content:space-between;align-items:center;min-height:36px}.brand{font-weight:800;font-size:14px}.progress{font-size:14px;color:var(--muted)}.prompt-wrap{text-align:center;margin:8px 0 13px}.label{font-size:12px;color:var(--muted)}.prompt{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:68px;line-height:1.05;font-weight:700}.hint{font-size:12px;color:var(--muted);margin-top:5px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start}.card{appearance:none;border:0;background:#315f42;padding:8px;border-radius:2px;aspect-ratio:0.72;box-shadow:0 5px 14px rgba(0,0,0,.12);touch-action:manipulation;transition:transform .07s}.card:active{transform:scale(.985)}.card[disabled]{opacity:1}.card-inner{height:100%;width:100%;background:var(--paper);display:flex;justify-content:center;align-items:flex-start;padding:13% 6% 8%;overflow:hidden}.poem-grid{width:100%;height:100%;display:grid;grid-template-columns:repeat(3,1fr);direction:rtl;align-items:start}.poem-col{font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;font-size:clamp(18px,5.5vw,28px);font-weight:500;line-height:1.16;display:flex;flex-direction:column;align-items:center;white-space:nowrap}.poem-char{display:block;height:1.16em}.card.correct{background:var(--ok);box-shadow:0 0 0 3px rgba(22,128,77,.18)}.card.wrong{background:var(--ng);box-shadow:0 0 0 3px rgba(180,59,48,.16)}.feedback{min-height:58px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:20px;margin-top:8px}.feedback.ok{color:var(--ok)}.feedback.ng{color:var(--ng)}.footer-note{margin-top:auto;text-align:center;color:var(--muted);font-size:10px;padding-top:8px}.screen{display:none}.screen.active{display:block}.start,.result{flex:1;display:none;align-items:center;justify-content:center;text-align:center}.start.active,.result.active{display:flex}.panel{width:100%;background:rgba(255,255,255,.6);border-radius:18px;padding:28px 20px;box-shadow:0 8px 24px rgba(0,0,0,.07)}.panel h1{font-size:28px;margin:0 0 8px}.panel p{color:var(--muted);line-height:1.65;margin:8px 0 20px}.primary{width:100%;border:0;border-radius:14px;background:var(--green);color:#fff;padding:16px;font-size:18px;font-weight:800}.mini,.weak{font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6}.score{font-size:54px;font-weight:900;margin:12px 0 18px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}.metric{background:#fff;border-radius:14px;padding:14px 8px}.metric .num{font-size:25px;font-weight:900}.metric .cap{font-size:12px;color:var(--muted);margin-top:4px}@media(max-width:390px){.app{padding-left:8px;padding-right:8px}.cards{gap:6px}.card{padding:6px}.card-inner{padding-top:12%}.poem-col{font-size:clamp(17px,5.35vw,22px)}.prompt{font-size:62px}}
-</style></head><body><main class="app">
-<section id="startScreen" class="start active"><div class="panel"><h1>一字決まり<br>3択トレーニング</h1><p>「む・す・め・ふ・さ・ほ・せ」を見て、対応する取り札をタップ。<br>10問で反応速度と正答率を測ります。</p><button id="startBtn" class="primary">トレーニング開始</button><div class="mini">競技かるたの取り札を意識した、3列縦書きのオリジナル札デザインです。</div></div></section>
-<section id="gameScreen" class="screen"><div class="topbar"><div class="brand">一字決まり・3択</div><div id="progress" class="progress">1 / 10</div></div><div class="prompt-wrap"><div class="label">決まり字</div><div id="prompt" class="prompt">む</div><div class="hint">正しい取り札をタップ</div></div><div id="cards" class="cards"></div><div id="feedback" class="feedback"></div><div class="footer-note">決まり字の表示から最初のタップまでを計測</div></section>
-<section id="resultScreen" class="result"><div class="panel"><div style="font-size:14px;color:var(--muted);font-weight:700">KARUTA SCORE</div><div id="score" class="score">0</div><div class="metrics"><div class="metric"><div id="accuracy" class="num">0%</div><div class="cap">正答率</div></div><div class="metric"><div id="avgTime" class="num">0.00秒</div><div class="cap">平均反応時間</div></div></div><div id="weak" class="weak"></div><button id="retryBtn" class="primary">もう一度</button></div></section>
-</main><script>
-const poems=[
-{key:"む",cols:["きりたちのぼる","あきのゆふぐれ",""]},
-{key:"す",cols:["ゆめのかよひぢ","ひとめよくらむ",""]},
-{key:"め",cols:["くもがくれにし","よはのつきかな",""]},
-{key:"ふ",cols:["むべやまかぜを","あらしといふらむ",""]},
-{key:"さ",cols:["いづこもおなじ","あきのゆふぐれ",""]},
-{key:"ほ",cols:["ただありあけの","つきぞのこれる",""]},
-{key:"せ",cols:["われてもすゑに","あはむとぞおもふ",""]}
-];
+:root{--bg:#f3efe5;--paper:#fffef9;--ink:#151515;--green:#315f42;--green2:#244a33;--ok:#16804d;--ng:#b43b30;--muted:#746f66}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
+body{min-height:100dvh} button{font:inherit}
+.app{max-width:520px;min-height:100dvh;margin:auto;padding:max(14px,env(safe-area-inset-top)) 10px max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column}
+.start,.result{flex:1;display:none;align-items:center;justify-content:center;text-align:center}
+.start.active,.result.active{display:flex} .screen{display:none} .screen.active{display:block}
+.panel{width:100%;background:rgba(255,255,255,.62);border-radius:18px;padding:26px 18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
+.panel h1{font-size:28px;margin:0 0 9px} .panel p{color:var(--muted);line-height:1.65;margin:8px 0 18px}
+.mode-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.primary{border:0;border-radius:14px;background:var(--green);color:#fff;padding:16px 10px;font-size:18px;font-weight:800;box-shadow:0 5px 14px rgba(49,95,66,.17)}
+.primary:active{background:var(--green2)} .mode-sub{display:block;font-size:11px;font-weight:600;opacity:.82;margin-top:4px}
+.mini,.weak{font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6}
+.topbar{display:flex;justify-content:space-between;align-items:center;min-height:34px} .brand{font-weight:800;font-size:14px} .progress{font-size:14px;color:var(--muted)}
+.prompt-wrap{text-align:center;margin:7px 0 12px}
+.label{font-size:11px;color:var(--muted);margin-bottom:1px}
+.prompt{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:68px;line-height:1;font-weight:700;letter-spacing:.03em}
+.upper-rest{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:15px;line-height:1.55;color:#55514a;min-height:47px;margin:5px auto 0;max-width:92%;letter-spacing:.02em}
+.hint{font-size:11px;color:var(--muted);margin-top:3px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;align-items:start}
+.card{appearance:none;border:0;background:var(--green);padding:6px;border-radius:2px;aspect-ratio:.72;box-shadow:0 4px 12px rgba(0,0,0,.12);touch-action:manipulation;transition:transform .07s}
+.card:active{transform:scale(.985)} .card[disabled]{opacity:1}
+.card-inner{height:100%;width:100%;background:var(--paper);display:flex;justify-content:center;align-items:flex-start;padding:12% 5% 7%;overflow:hidden}
+.poem-grid{width:100%;height:100%;display:grid;grid-template-columns:repeat(3,1fr);direction:rtl;align-items:start}
+.poem-col{font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;font-size:clamp(16px,5vw,24px);font-weight:500;line-height:1.13;display:flex;flex-direction:column;align-items:center;white-space:nowrap}
+.poem-char{display:block;height:1.13em} .card.correct{background:var(--ok)} .card.wrong{background:var(--ng)}
+.cards.five .card{padding:5px} .cards.five .poem-col{font-size:clamp(14px,4.5vw,21px)} .cards.five .card:nth-child(4){grid-column:1} .cards.five .card:nth-child(5){grid-column:2}
+.feedback{min-height:52px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:19px;margin-top:7px}
+.feedback.ok{color:var(--ok)} .feedback.ng{color:var(--ng)} .footer-note{margin-top:auto;text-align:center;color:var(--muted);font-size:10px;padding-top:6px}
+.score{font-size:54px;font-weight:900;margin:12px 0 18px} .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.metric{background:#fff;border-radius:14px;padding:14px 8px} .metric .num{font-size:25px;font-weight:900} .metric .cap{font-size:12px;color:var(--muted);margin-top:4px}
+@media(max-width:390px){.app{padding-left:7px;padding-right:7px}.cards{gap:5px}.card{padding:5px}.poem-col{font-size:clamp(15px,4.85vw,20px)}.cards.five .poem-col{font-size:clamp(13px,4.3vw,18px)}.prompt{font-size:62px}.upper-rest{font-size:14px}}
+</style>
+</head>
+<body><main class="app">
+<section id="startScreen" class="start active"><div class="panel">
+<h1>決まり字トレーニング</h1>
+<p>一字決まり7首＋二字決まり42首。<br>決まり字を見て、正しい取り札を選びます。</p>
+<div class="mode-buttons">
+<button class="primary modeBtn" data-count="3">3択モード<span class="mode-sub">まず覚える</span></button>
+<button class="primary modeBtn" data-count="5">5択モード<span class="mode-sub">少し実戦的</span></button>
+</div>
+<div class="mini">決まり字は大きく、その後の上の句は小さく表示します。取り札は3列縦書きのままです。</div>
+</div></section>
+
+<section id="gameScreen" class="screen">
+<div class="topbar"><div id="brand" class="brand">3択モード</div><div id="progress" class="progress">1 / 10</div></div>
+<div class="prompt-wrap"><div class="label">決まり字</div><div id="prompt" class="prompt">む</div><div id="upperRest" class="upper-rest"></div><div class="hint">正しい取り札をタップ</div></div>
+<div id="cards" class="cards"></div><div id="feedback" class="feedback"></div>
+<div class="footer-note">決まり字の表示から最初のタップまでを計測</div>
+</section>
+
+<section id="resultScreen" class="result"><div class="panel">
+<div style="font-size:14px;color:var(--muted);font-weight:700">KARUTA SCORE</div><div id="score" class="score">0</div>
+<div class="metrics"><div class="metric"><div id="accuracy" class="num">0%</div><div class="cap">正答率</div></div><div class="metric"><div id="avgTime" class="num">0.00秒</div><div class="cap">平均反応時間</div></div></div>
+<div id="weak" class="weak"></div>
+<div class="mode-buttons"><button class="primary modeBtn" data-count="3">3択でもう一度</button><button class="primary modeBtn" data-count="5">5択に挑戦</button></div>
+</div></section>
+</main>
+<script>
+const poems=[{"key":"む","rest":"らさめの　つゆもまだひぬ　まきのはに","lower":"きりたちのぼるあきのゆふぐれ","level":1},{"key":"す","rest":"みのえの　きしによるなみ　よるさへや","lower":"ゆめのかよひぢひとめよくらむ","level":1},{"key":"め","rest":"ぐりあひて　みしやそれとも　わかぬまに","lower":"くもがくれにしよはのつきかな","level":1},{"key":"ふ","rest":"くからに　あきのくさきの　しをるれば","lower":"むべやまかぜをあらしといふらむ","level":1},{"key":"さ","rest":"びしさに　やどをたちいでて　ながむれば","lower":"いづこもおなじあきのゆふぐれ","level":1},{"key":"ほ","rest":"ととぎす　なきつるかたを　ながむれば","lower":"ただありあけのつきぞのこれる","level":1},{"key":"せ","rest":"をはやみ　いはにせかるる　たきがはの","lower":"われてもすゑにあはむとぞおもふ","level":1},{"key":"あし","rest":"びきの　やまどりのをの　しだりをの","lower":"ながながしよをひとりかもねむ","level":2},{"key":"たご","rest":"のうらに　うちいでてみれば　しろたへの","lower":"ふじのたかねにゆきはふりつつ","level":2},{"key":"おく","rest":"やまに　もみぢふみわけ　なくしかの","lower":"こゑきくときぞあきはかなしき","level":2},{"key":"かさ","rest":"さぎの　わたせるはしに　おくしもの","lower":"しろきをみればよぞふけにける","level":2},{"key":"これ","rest":"やこの　ゆくもかへるも　わかれては","lower":"しるもしらぬもあふさかのせき","level":2},{"key":"つく","rest":"ばねの　みねよりおつる　みなのがは","lower":"こひぞつもりてふちとなりぬる","level":2},{"key":"みち","rest":"のくの　しのぶもぢずり　たれゆゑに","lower":"みだれそめにしわれならなくに","level":2},{"key":"たち","rest":"わかれ　いなばのやまの　みねにおふる","lower":"まつとしきかばいまかへりこむ","level":2},{"key":"ちは","rest":"やぶる　かみよもきかず　たつたがは","lower":"からくれなゐにみづくくるとは","level":2},{"key":"わび","rest":"ぬれば　いまはたおなじ　なにはなる","lower":"みをつくしてもあはむとぞおもふ","level":2},{"key":"つき","rest":"みれば　ちぢにものこそ　かなしけれ","lower":"わがみひとつのあきにはあらねど","level":2},{"key":"この","rest":"たびは　ぬさもとりあへず　たむけやま","lower":"もみぢのにしきかみのまにまに","level":2},{"key":"おぐ","rest":"らやま　みねのもみぢば　こころあらば","lower":"いまひとたびのみゆきまたなむ","level":2},{"key":"ひさ","rest":"かたの　ひかりのどけき　はるのひに","lower":"しづこころなくはなのちるらむ","level":2},{"key":"たれ","rest":"をかも　しるひとにせむ　たかさごの","lower":"まつもむかしのともならなくに","level":2},{"key":"なつ","rest":"のよは　まだよひながら　あけぬるを","lower":"くものいづこにつきやどるらむ","level":2},{"key":"しら","rest":"つゆに　かぜのふきしく　あきののは","lower":"つらぬきとめぬたまぞちりける","level":2},{"key":"しの","rest":"ぶれど　いろにいでにけり　わがこひは","lower":"ものやおもふとひとのとふまで","level":2},{"key":"こい","rest":"すてふ　わがなはまだき　たちにけり","lower":"ひとしれずこそおもひそめしか","level":2},{"key":"あい","rest":"みての　のちのこころに　くらぶれば","lower":"むかしはものをおもはざりけり","level":2},{"key":"ゆら","rest":"のとを　わたるふなびと　かぢをたえ","lower":"ゆくへもしらぬこひのみちかな","level":2},{"key":"やえ","rest":"むぐら　しげれるやどの　さびしきに","lower":"ひとこそみえねあきはきにけり","level":2},{"key":"かく","rest":"とだに　えやはいぶきの　さしもぐさ","lower":"さしもしらじなもゆるおもひを","level":2},{"key":"あけ","rest":"ぬれば　くるるものとは　しりながら","lower":"なほうらめしきあさぼらけかな","level":2},{"key":"たき","rest":"のおとは　たえてひさしく　なりぬれど","lower":"なこそながれてなほきこえけれ","level":2},{"key":"やす","rest":"らはで　ねなましものを　さよふけて","lower":"かたぶくまでのつきをみしかな","level":2},{"key":"いに","rest":"しへの　ならのみやこの　やへざくら","lower":"けふここのへににほひぬるかな","level":2},{"key":"よを","rest":"こめて　とりのそらねは　はかるとも","lower":"よにあふさかのせきはゆるさじ","level":2},{"key":"うら","rest":"みわび　ほさぬそでだに　あるものを","lower":"こひにくちなむなこそをしけれ","level":2},{"key":"もろ","rest":"ともに　あはれとおもへ　やまざくら","lower":"はなよりほかにしるひともなし","level":2},{"key":"ゆう","rest":"されば　かどたのいなば　おとづれて","lower":"あしのまろやにあきかぜぞふく","level":2},{"key":"おと","rest":"にきく　たかしのはまの　あだなみは","lower":"かけじやそでのぬれもこそすれ","level":2},{"key":"たか","rest":"さごの　をのへのさくら　さきにけり","lower":"とやまのかすみたたずもあらなむ","level":2},{"key":"うか","rest":"りける　ひとをはつせの　やまおろしよ","lower":"はげしかれとはいのらぬものを","level":2},{"key":"おも","rest":"ひわび　さてもいのちは　あるものを","lower":"うきにたへぬはなみだなりけり","level":2},{"key":"よも","rest":"すがら　ものおもふころは　あけやらで","lower":"ねやのひまさへつれなかりけり","level":2},{"key":"たま","rest":"のをよ　たえなばたえね　ながらへば","lower":"しのぶることのよわりもぞする","level":2},{"key":"みせ","rest":"ばやな　をじまのあまの　そでだにも","lower":"ぬれにぞぬれしいろはかはらず","level":2},{"key":"きり","rest":"ぎりす　なくやしもよの　さむしろに","lower":"ころもかたしきひとりかもねむ","level":2},{"key":"みよ","rest":"しのの　やまのあきかぜ　さよふけて","lower":"ふるさとさむくころもうつなり","level":2},{"key":"こぬ","rest":"ひとを　まつほのうらの　ゆふなぎに","lower":"やくやもしほのみもこがれつつ","level":2},{"key":"もも","rest":"しきや　ふるきのきばの　しのぶにも","lower":"なほあまりあるむかしなりけり","level":2}];
+const TOTAL=10;let choiceCount=3,order=[],q=0,startTime=0,locked=false,answers=[];
+const $=s=>document.querySelector(s);
+const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function show(id){["startScreen","gameScreen","resultScreen"].forEach(x=>$("#"+x).classList.remove("active"));$("#"+id).classList.add("active")}
 function distribute(text){const s=text.replace(/\s/g,"");const n=s.length;const a=Math.ceil(n/3),b=Math.ceil((n-a)/2);return[s.slice(0,a),s.slice(a,a+b),s.slice(a+b)]}
-poems.forEach(p=>{const text=p.cols.join("");p.cols=distribute(text)});
-const TOTAL=10;let order=[],q=0,startTime=0,locked=false,answers=[];const $=s=>document.querySelector(s);const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};function show(id){["startScreen","gameScreen","resultScreen"].forEach(x=>$("#"+x).classList.remove("active"));$("#"+id).classList.add("active")}function buildOrder(){const base=shuffle(poems),extra=Array.from({length:TOTAL-poems.length},()=>poems[Math.floor(Math.random()*poems.length)]);return shuffle(base.concat(extra))}function startGame(){order=buildOrder();q=0;answers=[];show("gameScreen");renderQuestion()}
 function makeCol(text){const d=document.createElement("div");d.className="poem-col";[...text].forEach(c=>{const s=document.createElement("span");s.className="poem-char";s.textContent=c;d.appendChild(s)});return d}
-function renderQuestion(){locked=false;const current=order[q];$("#progress").textContent=`${q+1} / ${TOTAL}`;$("#prompt").textContent=current.key;$("#feedback").className="feedback";$("#feedback").textContent="";const opts=shuffle([current,...shuffle(poems.filter(p=>p.key!==current.key)).slice(0,2)]),cards=$("#cards");cards.innerHTML="";opts.forEach(p=>{const b=document.createElement("button");b.className="card";b.dataset.key=p.key;const inner=document.createElement("div");inner.className="card-inner";const grid=document.createElement("div");grid.className="poem-grid";p.cols.forEach(c=>grid.appendChild(makeCol(c)));inner.appendChild(grid);b.appendChild(inner);b.addEventListener("click",()=>choose(b,p,current));cards.appendChild(b)});requestAnimationFrame(()=>startTime=performance.now())}
+function buildOrder(){let a=shuffle(poems);while(a.length<TOTAL)a=a.concat(shuffle(poems));return a.slice(0,TOTAL)}
+function startGame(n){choiceCount=n;order=buildOrder();q=0;answers=[];$("#brand").textContent=`${n}択モード｜一字＋二字`;show("gameScreen");renderQuestion()}
+function renderQuestion(){locked=false;const current=order[q];$("#progress").textContent=`${q+1} / ${TOTAL}`;$("#prompt").textContent=current.key;$("#upperRest").textContent=current.rest;$("#feedback").className="feedback";$("#feedback").textContent="";const distractors=shuffle(poems.filter(p=>p.key!==current.key)).slice(0,choiceCount-1),opts=shuffle([current,...distractors]),cards=$("#cards");cards.className="cards"+(choiceCount===5?" five":"");cards.innerHTML="";opts.forEach(p=>{const b=document.createElement("button");b.className="card";b.dataset.key=p.key;b.setAttribute("aria-label",p.lower);const inner=document.createElement("div");inner.className="card-inner";const grid=document.createElement("div");grid.className="poem-grid";distribute(p.lower).forEach(c=>grid.appendChild(makeCol(c)));inner.appendChild(grid);b.appendChild(inner);b.addEventListener("click",()=>choose(b,p,current));cards.appendChild(b)});requestAnimationFrame(()=>startTime=performance.now())}
 function choose(button,picked,current){if(locked)return;locked=true;const sec=(performance.now()-startTime)/1000,correct=picked.key===current.key;document.querySelectorAll(".card").forEach(b=>{b.disabled=true;if(b.dataset.key===current.key)b.classList.add("correct")});if(!correct)button.classList.add("wrong");answers.push({key:current.key,correct,sec});const f=$("#feedback");f.className="feedback "+(correct?"ok":"ng");f.textContent=`${correct?"○ 正解！":"× おしい！"} ${sec.toFixed(2)}秒`;setTimeout(()=>{q++;q>=TOTAL?finish():renderQuestion()},650)}
 function finish(){const ok=answers.filter(a=>a.correct).length,accuracy=ok/TOTAL,avg=answers.reduce((s,a)=>s+a.sec,0)/TOTAL,speed=Math.max(0,Math.min(1,(4-avg)/3)),score=Math.round((accuracy*.7+speed*.3)*10000);$("#score").textContent=score.toLocaleString("ja-JP");$("#accuracy").textContent=Math.round(accuracy*100)+"%";$("#avgTime").textContent=avg.toFixed(2)+"秒";const m={};answers.forEach(a=>{m[a.key]??={n:0,ok:0,t:0};m[a.key].n++;m[a.key].ok+=a.correct?1:0;m[a.key].t+=a.sec});const r=Object.entries(m).map(([key,v])=>({key,rate:v.ok/v.n,avg:v.t/v.n})).sort((a,b)=>(a.rate-b.rate)||(b.avg-a.avg));$("#weak").textContent="今回の復習候補："+r.slice(0,2).map(x=>`「${x.key}」`).join(" と ");show("resultScreen")}
-$("#startBtn").addEventListener("click",startGame);$("#retryBtn").addEventListener("click",startGame);
+document.querySelectorAll(".modeBtn").forEach(b=>b.addEventListener("click",()=>startGame(Number(b.dataset.count))));
 </script></body></html>
