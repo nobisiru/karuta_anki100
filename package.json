@@ -1,0 +1,15 @@
+{
+  "name": "karuta-anki100",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/rpg-core.test.js && node tests/rpg-assets.test.js && node tests/rpg-smoke.test.js",
+    "lint": "html-validate --rule=doctype-style:off --rule=void-style:off hyakushu-ibun.html && prettier --check hyakushu-ibun.html hyakushu-ibun.css hyakushu-ibun.js rpg-data.js rpg-core.js rpg-art.js tests/*.js",
+    "format": "prettier --write hyakushu-ibun.html hyakushu-ibun.css hyakushu-ibun.js rpg-data.js rpg-core.js rpg-art.js tests/*.js"
+  },
+  "devDependencies": {
+    "html-validate": "9.7.1",
+    "jsdom": "26.1.0",
+    "prettier": "3.6.2"
+  }
+}

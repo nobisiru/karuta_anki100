@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    />
+    <meta name="theme-color" content="#090a0e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>百首異聞｜第一章 平安編</title>
+    <link rel="stylesheet" href="hyakushu-ibun.css" />
+  </head>
+  <body>
+    <div id="app" class="game-shell">
+      <div class="ambient" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <header class="game-header">
+        <button
+          id="topButton"
+          class="icon-button"
+          type="button"
+          aria-label="百人一首TOPへ戻る"
+        >
+          ←
+        </button>
+        <div class="header-title">
+          <span id="chapterLabel">百首異聞</span>
+          <b id="screenLabel">第一章　平安編</b>
+        </div>
+        <button
+          id="settingsButton"
+          class="icon-button"
+          type="button"
+          aria-label="設定を開く"
+        >
+          ⚙
+        </button>
+      </header>
+
+      <main>
+        <section
+          id="titleScreen"
+          class="screen active"
+          aria-labelledby="gameTitle"
+        >
+          <div class="title-visual" aria-hidden="true">
+            <div class="title-moon"></div>
+            <div class="title-gate"></div>
+            <div class="title-seal seal-a">む</div>
+            <div class="title-seal seal-b">ちは</div>
+            <div class="title-seal seal-c">おく</div>
+          </div>
+          <div class="title-copy">
+            <span class="eyebrow">HYAKUSHU IBUN</span>
+            <h1 id="gameTitle">百首異聞</h1>
+            <p>望月に喰われた歌</p>
+          </div>
+          <div class="title-actions">
+            <button
+              id="continueButton"
+              class="primary-button"
+              type="button"
+              hidden
+            >
+              <span>旅をつづける</span><small id="continueDetail"></small>
+            </button>
+            <button
+              id="newGameButton"
+              class="primary-button gold"
+              type="button"
+            >
+              新しい物語
+            </button>
+            <button id="collectionButton" class="text-button" type="button">
+              歌珠と怪異の記録
+            </button>
+          </div>
+          <p class="version-note">平安編・縦切り試作版　10〜15分</p>
+        </section>
+
+        <section
+          id="prologueScreen"
+          class="screen story-screen"
+          aria-labelledby="prologueTitle"
+        >
+          <div class="story-paper">
+            <span class="eyebrow dark">PROLOGUE</span>
+            <h2 id="prologueTitle">百の封印</h2>
+            <p>かつて、怪異を鎮めたのは刀でも弓でもなかった。</p>
+            <p>
+              歌人たちが遺した百の歌は、人の記憶を結び、この国の夜を守る封印となった。
+            </p>
+            <p>だが満月の晩、百首に名を残せなかった権力者が目覚める。</p>
+            <blockquote>
+              「我が栄華より、なぜあの者たちの歌が永く残る――」
+            </blockquote>
+            <p>
+              奪われた歌は「歌のカケラ」となり、平安の各地へ散った。三つの決まり字を宿す怪異を鎮め、望月殿へ向かえ。
+            </p>
+            <button
+              id="startJourneyButton"
+              class="primary-button ink"
+              type="button"
+            >
+              月夜へ踏み出す
+            </button>
+          </div>
+        </section>
+
+        <section id="fieldScreen" class="screen" aria-labelledby="fieldTitle">
+          <div class="field-heading">
+            <div>
+              <span class="eyebrow">HEIAN NIGHT</span>
+              <h2 id="fieldTitle">月影の道</h2>
+            </div>
+            <div class="field-resource">
+              <span>歌のカケラ</span><b id="fieldShards">0</b>
+            </div>
+          </div>
+          <div class="field-map" id="fieldMap">
+            <div class="map-sky"></div>
+            <div class="map-mountains"></div>
+            <div class="map-river"></div>
+            <div class="map-road"></div>
+            <div class="map-mist mist-one"></div>
+            <div class="map-mist mist-two"></div>
+            <ol id="routeNodes" class="route-nodes"></ol>
+          </div>
+          <div class="field-panel">
+            <div>
+              <span id="fieldStep">一夜目</span>
+              <h3 id="nextEncounterName">怪異の気配</h3>
+              <p id="fieldMessage">月明かりを頼りに、歌のカケラを追う。</p>
+            </div>
+            <button
+              id="encounterButton"
+              class="primary-button compact"
+              type="button"
+            >
+              先へ進む
+            </button>
+          </div>
+        </section>
+
+        <section id="battleScreen" class="screen" aria-labelledby="enemyName">
+          <div class="battle-hud">
+            <div class="meter-card hp-meter">
+              <div><span>HP</span><b id="hpText">120 / 120</b></div>
+              <div class="meter-track"><i id="hpBar"></i></div>
+            </div>
+            <div class="meter-card mp-meter">
+              <div><span>MP</span><b id="mpText">100 / 100</b></div>
+              <div class="meter-track"><i id="mpBar"></i></div>
+            </div>
+          </div>
+
+          <article id="enemyStage" class="enemy-stage">
+            <div class="stage-atmosphere" aria-hidden="true"></div>
+            <div class="enemy-heading">
+              <span id="enemyPlace">すすき野</span>
+              <h2 id="enemyName">白面の野狐</h2>
+              <p id="enemyEpithet">月下に尾を曳く、忘却の獣</p>
+            </div>
+            <div id="monsterArt" class="monster-art" aria-hidden="true"></div>
+            <div
+              id="sealLayer"
+              class="seal-layer"
+              role="group"
+              aria-label="怪異の決まり字"
+            ></div>
+            <div id="effectLayer" class="effect-layer" aria-hidden="true"></div>
+          </article>
+
+          <div id="setupPanel" class="battle-panel">
+            <div class="phase-heading">
+              <div>
+                <span>PREPARE</span>
+                <h3>歌珠を5枚セット</h3>
+              </div>
+              <b id="slotCount">0 / 5</b>
+            </div>
+            <p class="guidance">
+              怪異に浮かぶ3枚の決まり字を見て、対応する下の句札を選ぼう。残り2枚で共鳴をつくれます。
+            </p>
+            <div
+              id="slots"
+              class="card-slots"
+              role="group"
+              aria-label="選んだ歌珠"
+            ></div>
+            <div id="linkPreview" class="link-preview" aria-live="polite"></div>
+            <div class="setup-actions">
+              <button
+                id="openPickerButton"
+                class="secondary-button"
+                type="button"
+              >
+                歌珠を選ぶ
+              </button>
+              <button
+                id="bindButton"
+                class="primary-button compact"
+                type="button"
+                disabled
+              >
+                五首を結ぶ
+              </button>
+            </div>
+          </div>
+
+          <div id="fightPanel" class="battle-panel" hidden>
+            <div class="phase-heading">
+              <div>
+                <span>BATTLE</span>
+                <h3>攻撃する歌珠を選ぶ</h3>
+              </div>
+              <b id="turnLabel">あなたの番</b>
+            </div>
+            <div id="activeLinks" class="link-preview active-links"></div>
+            <div id="actionCards" class="action-cards"></div>
+            <button
+              id="recoverButton"
+              class="secondary-button full"
+              type="button"
+            >
+              息を整える <small>MP +25</small>
+            </button>
+          </div>
+
+          <div
+            id="battleLog"
+            class="battle-log"
+            role="status"
+            aria-live="polite"
+          ></div>
+        </section>
+
+        <section
+          id="victoryScreen"
+          class="screen"
+          aria-labelledby="victoryTitle"
+        >
+          <div class="victory-emblem" aria-hidden="true"><span>百</span></div>
+          <span class="eyebrow">CHAPTER CLEAR</span>
+          <h2 id="victoryTitle">平安の夜明け</h2>
+          <p>望月の影は退き、奪われた歌が人々の記憶へ戻っていく。</p>
+          <div class="victory-stats">
+            <div><span>討伐</span><b id="victoryBattles">5</b></div>
+            <div><span>カケラ</span><b id="victoryShards">0</b></div>
+            <div><span>育った札</span><b id="victoryLeveled">0</b></div>
+          </div>
+          <button
+            id="victoryCollectionButton"
+            class="primary-button gold"
+            type="button"
+          >
+            歌珠の成長を見る
+          </button>
+          <button id="returnTopButton" class="text-button light" type="button">
+            百人一首TOPへ戻る
+          </button>
+        </section>
+      </main>
+    </div>
+
+    <div
+      id="pickerModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pickerTitle"
+      hidden
+    >
+      <div class="modal-sheet picker-sheet">
+        <div class="modal-handle" aria-hidden="true"></div>
+        <div class="modal-header">
+          <div>
+            <span class="eyebrow dark">UTA-DAMA</span>
+            <h2 id="pickerTitle">下の句札を選ぶ</h2>
+          </div>
+          <button
+            id="closePickerButton"
+            class="round-close"
+            type="button"
+            aria-label="閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <div class="picker-tabs" role="tablist">
+          <button
+            class="picker-tab active"
+            data-view="recommended"
+            type="button"
+          >
+            今回の候補
+          </button>
+          <button class="picker-tab" data-view="all" type="button">
+            全100首
+          </button>
+        </div>
+        <div id="pickerSearchWrap" class="picker-search" hidden>
+          <input
+            id="pickerSearch"
+            type="search"
+            inputmode="search"
+            placeholder="番号・下の句で絞り込む"
+            aria-label="札を検索"
+          />
+        </div>
+        <p id="pickerHint" class="picker-hint">
+          正解札3枚と、共鳴を組みやすい札が含まれています。
+        </p>
+        <div id="pickerGrid" class="picker-grid"></div>
+      </div>
+    </div>
+
+    <div
+      id="resultModal"
+      class="modal centered"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="resultTitle"
+      hidden
+    >
+      <div class="result-card">
+        <div class="result-mark">討</div>
+        <span class="eyebrow dark">BATTLE CLEAR</span>
+        <h2 id="resultTitle">怪異 討伐</h2>
+        <p id="resultSummary"></p>
+        <div id="rewardRows" class="reward-rows"></div>
+        <button id="resultDoneButton" class="primary-button ink" type="button">
+          月影の道へ戻る
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="collectionModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="collectionTitle"
+      hidden
+    >
+      <div class="modal-sheet collection-sheet">
+        <div class="modal-handle" aria-hidden="true"></div>
+        <div class="modal-header">
+          <div>
+            <span class="eyebrow dark">ARCHIVE</span>
+            <h2 id="collectionTitle">歌珠と怪異の記録</h2>
+          </div>
+          <button
+            id="closeCollectionButton"
+            class="round-close"
+            type="button"
+            aria-label="閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <div class="archive-summary">
+          <div><span>歌のカケラ</span><b id="archiveShards">0</b></div>
+          <div><span>怪異</span><b id="archiveMonsters">0 / 11</b></div>
+        </div>
+        <h3 class="archive-heading">育った歌珠</h3>
+        <div id="cardArchive" class="card-archive"></div>
+        <h3 class="archive-heading">怪異図録</h3>
+        <div id="monsterArchive" class="monster-archive"></div>
+      </div>
+    </div>
+
+    <div
+      id="settingsModal"
+      class="modal centered"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settingsTitle"
+      hidden
+    >
+      <div class="settings-card">
+        <div class="modal-header">
+          <h2 id="settingsTitle">設定</h2>
+          <button
+            id="closeSettingsButton"
+            class="round-close"
+            type="button"
+            aria-label="閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <label class="toggle-row"
+          ><span><b>効果音</b><small>攻撃・共鳴・討伐の音</small></span
+          ><input id="soundToggle" type="checkbox" checked
+        /></label>
+        <label class="toggle-row"
+          ><span><b>振動</b><small>対応端末の触覚フィードバック</small></span
+          ><input id="hapticsToggle" type="checkbox" checked
+        /></label>
+        <label class="toggle-row"
+          ><span
+            ><b>演出を控えめに</b><small>大きな動きや点滅を減らす</small></span
+          ><input id="motionToggle" type="checkbox"
+        /></label>
+        <button id="resetButton" class="danger-button" type="button">
+          平安編のセーブを消す
+        </button>
+      </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="rpg-data.js"></script>
+    <script src="rpg-core.js"></script>
+    <script src="rpg-art.js"></script>
+    <script src="hyakushu-ibun.js"></script>
+  </body>
+</html>
