@@ -37,7 +37,10 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function defeatCurrentEnemy() {
   assert.equal($("#sealLayer").children.length, 3, "決まり字が3枚表示される");
-  assert.ok($("#monsterArt svg"), "怪異SVGが描画される");
+  assert.ok(
+    $("#monsterArt .painted-monster"),
+    "怪異の画家調アートが描画される",
+  );
   click("#openPickerButton");
   const exactNos = [...window.document.querySelectorAll(".enemy-seal")].map(
     (seal) => Number(seal.dataset.poem),

@@ -857,10 +857,34 @@ p {
   isolation: isolate;
 }
 
+.enemy-stage::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 42px -15% -18%;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 50% 49%,
+      color-mix(in srgb, var(--enemy-accent) 30%, transparent),
+      transparent 47%
+    ),
+    conic-gradient(
+      from 12deg at 50% 55%,
+      transparent,
+      color-mix(in srgb, var(--enemy-accent) 10%, transparent),
+      transparent 18%,
+      transparent 100%
+    );
+  filter: blur(8px);
+  opacity: 0.82;
+  animation: cursed-aura 7s linear infinite;
+}
+
 .stage-atmosphere {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   background:
     linear-gradient(
       160deg,
@@ -907,16 +931,53 @@ p {
 
 .monster-art {
   position: absolute;
+  z-index: 2;
   inset: 50px 0 0;
   display: grid;
   place-items: end center;
   filter: drop-shadow(0 20px 16px #000b);
+  pointer-events: none;
 }
 
-.monster-art svg {
+.monster-art::before {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 4px;
+  height: 42px;
+  border-radius: 50%;
+  background: #000c;
+  filter: blur(10px);
+}
+
+.monster-art svg,
+.painted-monster {
   width: min(100%, 420px);
   height: 330px;
+  object-fit: contain;
+  object-position: center bottom;
   overflow: visible;
+}
+
+.painted-monster {
+  position: relative;
+  z-index: 1;
+  user-select: none;
+  transform-origin: 50% 82%;
+  filter: drop-shadow(0 18px 15px #000e)
+    drop-shadow(
+      0 0 16px color-mix(in srgb, var(--enemy-accent) 25%, transparent)
+    );
+  animation:
+    painted-arrival 0.82s cubic-bezier(0.15, 0.78, 0.22, 1) both,
+    painted-breathe 4.6s ease-in-out 0.82s infinite;
+}
+
+.painted-monster.boss-monster {
+  width: min(105%, 450px);
+  height: 342px;
+  filter: drop-shadow(0 22px 18px #000) drop-shadow(0 0 24px #d7ad526b);
 }
 
 .monster-breathe {
@@ -935,6 +996,38 @@ p {
 @keyframes eyes-glow {
   50% {
     filter: brightness(1.6) drop-shadow(0 0 8px #ff4938);
+  }
+}
+
+@keyframes painted-arrival {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+    filter: brightness(0) blur(7px) drop-shadow(0 24px 18px #000);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.018);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes painted-breathe {
+  50% {
+    transform: translateY(-6px) scale(1.012);
+    filter: brightness(1.05) drop-shadow(0 22px 18px #000e)
+      drop-shadow(
+        0 0 22px color-mix(in srgb, var(--enemy-accent) 34%, transparent)
+      );
+  }
+}
+
+@keyframes cursed-aura {
+  to {
+    transform: rotate(360deg) scale(1.03);
   }
 }
 
@@ -1096,6 +1189,12 @@ p {
 .enemy-stage.hit {
   animation: stage-hit 0.38s ease;
 }
+.enemy-stage.hit .painted-monster {
+  animation: monster-recoil 0.52s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.enemy-stage.exact-hit .painted-monster {
+  animation: monster-exact-break 0.72s ease both;
+}
 .enemy-stage.counter {
   animation: stage-counter 0.36s ease;
 }
@@ -1113,6 +1212,33 @@ p {
   35% {
     transform: translateY(4px);
     box-shadow: inset 0 0 70px #a52727aa;
+  }
+}
+
+@keyframes monster-recoil {
+  28% {
+    transform: translateX(10px) rotate(1.5deg) scale(0.97);
+    filter: brightness(1.6) saturate(0.45) drop-shadow(0 0 26px #fff1b0);
+  }
+  58% {
+    transform: translateX(-6px) rotate(-0.8deg) scale(1.015);
+  }
+}
+
+@keyframes monster-exact-break {
+  0% {
+    transform: scale(1);
+  }
+  24% {
+    transform: scale(0.92);
+    filter: brightness(2.1) contrast(1.25) drop-shadow(0 0 34px #fff4c5);
+  }
+  47% {
+    transform: scale(1.05);
+    filter: brightness(0.45) saturate(1.8) drop-shadow(0 0 28px #b22f2f);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -1152,6 +1278,34 @@ p {
   color: var(--muted);
   font-size: 11px;
   line-height: 1.55;
+}
+
+.enemy-threat {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 8px 9px;
+  color: #efd9bb;
+  background: linear-gradient(90deg, #4a1e1e8f, #2116139c);
+  border-left: 3px solid #b4473e;
+  border-radius: 3px 9px 9px 3px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.enemy-threat i {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  color: #fff0ce;
+  background: #982f2d;
+  border-radius: 50%;
+  font-family: "Yu Mincho", serif;
+  font-style: normal;
+  font-weight: 1000;
 }
 
 .card-slots {
@@ -1624,7 +1778,7 @@ p {
 
 .archive-monster {
   display: grid;
-  grid-template-columns: 42px 1fr auto;
+  grid-template-columns: 54px 1fr auto;
   align-items: center;
   gap: 8px;
   padding: 8px;
@@ -1643,6 +1797,25 @@ p {
   background: #33261d;
   font-family: "Yu Mincho", serif;
   font-size: 20px;
+}
+
+.archive-art {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #7f6540;
+  border-radius: 13px;
+  background: radial-gradient(circle, #6d482d66, transparent 68%), #0d0c0e;
+  box-shadow: inset 0 0 18px #000;
+}
+
+.archive-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 4px #000);
 }
 
 .archive-monster b,
@@ -1798,6 +1971,10 @@ body.reduced-motion *::after {
   }
   .monster-art svg {
     height: 280px;
+  }
+  .painted-monster,
+  .painted-monster.boss-monster {
+    height: 282px;
   }
   .title-visual {
     height: 210px;

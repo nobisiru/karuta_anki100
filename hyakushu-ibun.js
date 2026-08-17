@@ -226,7 +226,7 @@
     renderBattle();
     renderSlots();
     $("#battleLog").innerHTML =
-      `<b>${escapeHtml(enemy.intro)}</b><br>${escapeHtml(enemy.story)}`;
+      `<b>${escapeHtml(enemy.intro)}</b><br>${escapeHtml(enemy.story)}<span class="enemy-threat"><i>危</i>${escapeHtml(enemy.threat)}</span>`;
     playSound(enemy.boss ? "boss" : "encounter");
     vibrate(enemy.boss ? [40, 50, 80] : [35, 45, 35]);
   }
@@ -236,7 +236,16 @@
     $("#enemyPlace").textContent = enemy.place;
     $("#enemyName").textContent = enemy.name;
     $("#enemyEpithet").textContent = enemy.epithet;
-    $("#monsterArt").innerHTML = Art.monsterSvg(enemy);
+    const monsterArt = $("#monsterArt");
+    monsterArt.innerHTML = Art.monsterMarkup(enemy);
+    const paintedMonster = $(".painted-monster", monsterArt);
+    paintedMonster?.addEventListener(
+      "error",
+      () => {
+        monsterArt.innerHTML = Art.monsterSvg(enemy);
+      },
+      { once: true },
+    );
     $("#enemyStage").style.setProperty("--enemy-accent", enemy.palette[2]);
     $("#sealLayer").innerHTML = seals
       .map((seal) => {
@@ -455,12 +464,13 @@
     const layer = $("#effectLayer");
     layer.innerHTML = `<i class="slash-effect"></i><b class="damage-number ${outcome.exact ? "exact" : ""}">${outcome.exact ? "一首接続" : outcome.damage}</b>`;
     const stage = $("#enemyStage");
-    stage.classList.remove("hit");
+    stage.classList.remove("hit", "exact-hit");
     void stage.offsetWidth;
+    stage.classList.toggle("exact-hit", outcome.exact);
     stage.classList.add("hit");
     setTimeout(() => {
       layer.innerHTML = "";
-      stage.classList.remove("hit");
+      stage.classList.remove("hit", "exact-hit");
     }, 900);
     playSound(outcome.exact ? "exact" : "hit");
     vibrate(outcome.exact ? [25, 35, 85] : 35);
@@ -596,7 +606,10 @@
     $("#monsterArchive").innerHTML = allEnemies
       .map((enemy) => {
         const known = save.defeated?.includes(enemy.id);
-        return `<div class="archive-monster ${known ? "" : "locked"}"><span class="sigil">${known ? enemy.name.slice(0, 1) : "？"}</span><div><b>${known ? escapeHtml(enemy.name) : "未遭遇の怪異"}</b><small>${known ? escapeHtml(enemy.epithet) : "月影の道に潜んでいる"}</small></div><span>${known ? "討伐済" : "未記録"}</span></div>`;
+        const portrait = known
+          ? `<span class="archive-art"><img src="${Art.monsterImage(enemy)}" alt="" loading="lazy" decoding="async"></span>`
+          : '<span class="sigil">？</span>';
+        return `<div class="archive-monster ${known ? "" : "locked"}">${portrait}<div><b>${known ? escapeHtml(enemy.name) : "未遭遇の怪異"}</b><small>${known ? escapeHtml(enemy.epithet) : "月影の道に潜んでいる"}</small></div><span>${known ? "討伐済" : "未記録"}</span></div>`;
       })
       .join("");
     setModal($("#collectionModal"), true);

@@ -246,5 +246,14 @@
     return (renderers[monster.archetype] || ink)(monster);
   }
 
-  global.HyakushuArt = { monsterSvg };
+  function monsterImage(monster) {
+    return `assets/monsters/${monster.id}.webp`;
+  }
+
+  function monsterMarkup(monster) {
+    const bossClass = monster.boss ? " boss-monster" : "";
+    return `<img class="painted-monster${bossClass}" src="${monsterImage(monster)}" alt="${monster.name}――${monster.epithet}" width="960" height="960" decoding="async" draggable="false">`;
+  }
+
+  global.HyakushuArt = { monsterImage, monsterMarkup, monsterSvg };
 })(typeof window !== "undefined" ? window : globalThis);

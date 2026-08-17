@@ -15,6 +15,30 @@ localAssets.forEach((asset) =>
   assert.ok(fs.existsSync(path.join(root, asset)), `${asset} が存在する`),
 );
 
+const monsterIds = [
+  "hakumen",
+  "sumikurai",
+  "tsukibami",
+  "tomoshibigumo",
+  "sakasawara",
+  "mizukagami",
+  "momijioni",
+  "nemurijika",
+  "ayanukiga",
+  "kanesemukade",
+  "michinaga",
+];
+monsterIds.forEach((id) => {
+  const asset = path.join(root, "assets", "monsters", `${id}.webp`);
+  assert.ok(fs.existsSync(asset), `${id}の画家調怪異アートが存在する`);
+  assert.ok(fs.statSync(asset).size < 400_000, `${id}の画像がモバイル向け容量`);
+});
+assert.equal(
+  fs.readdirSync(path.join(root, "assets", "monsters")).length,
+  monsterIds.length,
+  "怪異10体とボス1体の画像が揃う",
+);
+
 assert.match(index, /map-progress\.js/, "既存TOPがRPGランチャーを読み込む");
 assert.match(
   launcher,

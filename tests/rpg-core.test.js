@@ -22,6 +22,7 @@ for (const enemy of [...data.monsters, data.boss]) {
   assert.equal(enemy.sealPoems.length, 3, `${enemy.name}は3枚の決まり字を持つ`);
   assert.ok(enemy.story.length >= 20, `${enemy.name}に怪異描写がある`);
   assert.ok(enemy.intro.length >= 10, `${enemy.name}に登場演出文がある`);
+  assert.ok(enemy.threat.length >= 20, `${enemy.name}に討伐すべき脅威がある`);
   enemy.sealPoems.forEach((no) =>
     assert.ok(no >= 1 && no <= 100, `${enemy.name}の札番号が有効`),
   );
