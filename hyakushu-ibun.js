@@ -325,7 +325,9 @@
       .sort((a, b) => b.score - a.score || a.no - b.no)
       .slice(0, 9)
       .map((entry) => entry.no);
-    return [...new Set([...exact, ...linked])].slice(0, 12);
+    return [...new Set([...exact, ...linked])]
+      .slice(0, 12)
+      .sort((a, b) => a - b);
   }
 
   function openPicker() {

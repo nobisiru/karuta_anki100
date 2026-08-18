@@ -42,6 +42,14 @@ async function defeatCurrentEnemy() {
     "怪異の画家調アートが描画される",
   );
   click("#openPickerButton");
+  const recommendedNos = [
+    ...window.document.querySelectorAll("#pickerGrid [data-pick]"),
+  ].map((card) => Number(card.dataset.pick));
+  assert.deepEqual(
+    recommendedNos,
+    [...recommendedNos].sort((a, b) => a - b),
+    "今回の候補札が歌番号順に並ぶ",
+  );
   const exactNos = [...window.document.querySelectorAll(".enemy-seal")].map(
     (seal) => Number(seal.dataset.poem),
   );
