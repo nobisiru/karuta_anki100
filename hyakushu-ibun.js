@@ -20,6 +20,7 @@
     audio: null,
     sessionStartedAt: Date.now(),
     pendingChapter: null,
+    pendingRecovery: null,
     raceToken: 0,
     raceTimers: [],
   };
@@ -172,6 +173,7 @@
   function startNewGame() {
     state.save = Core.defaultSave(DATA);
     state.pendingChapter = null;
+    state.pendingRecovery = null;
     persist();
     refreshTitle();
     showScreen("prologueScreen", "序章　放課後が止まった日");
@@ -635,11 +637,12 @@
     $("#raceFeedback").innerHTML =
       `<b>${escapeHtml(state.battle.enemy.name)}が先取。</b> 決まり字は「${escapeHtml(poem(correctNo).key)}」。`;
     $("#effectLayer").innerHTML = '<i class="opponent-hand"></i>';
+    const opponentHand = $(".opponent-hand", $("#effectLayer"));
     playSound("counter");
     vibrate([45, 25, 25]);
     setTimeout(
       () => {
-        $("#effectLayer").innerHTML = "";
+        opponentHand?.remove();
       },
       TEST_MODE ? 24 : 500,
     );
@@ -661,6 +664,13 @@
     );
     state.save.hp = Math.max(0, state.save.hp - damage);
     updateHud();
+    const effectLayer = $("#effectLayer");
+    effectLayer.insertAdjacentHTML(
+      "beforeend",
+      `<b class="hp-damage-number">-${damage} HP</b>`,
+    );
+    const damageNumber = $(".hp-damage-number", effectLayer);
+    setTimeout(() => damageNumber?.remove(), TEST_MODE ? 24 : 680);
     const stage = $("#enemyStage");
     stage.classList.add("counter");
     setTimeout(() => stage.classList.remove("counter"), TEST_MODE ? 24 : 420);
@@ -717,6 +727,7 @@
     clearRaceTimers();
     const enemy = state.battle.enemy;
     const chapter = currentChapter();
+    const hpAtVictory = Math.round(state.save.hp);
     const isChapterEnd =
       state.save.encounterIndex === chapter.encounters.length - 1;
     const rewards = enemy.sealPoems.map((no) => {
@@ -732,6 +743,7 @@
     state.save.hp = Math.min(state.save.maxHp, state.save.hp + 20);
     state.save.mp = Math.min(state.save.maxMp, state.save.mp + 30);
     state.pendingChapter = null;
+    state.pendingRecovery = null;
     if (isChapterEnd) {
       if (!state.save.completedChapters.includes(chapter.id)) {
         state.save.completedChapters.push(chapter.id);
@@ -751,6 +763,13 @@
         state.save.encounterIndex = 0;
         state.save.hp = state.save.maxHp;
         state.save.mp = state.save.maxMp;
+        if (chapter.recoveryEvent) {
+          state.pendingRecovery = {
+            before: hpAtVictory,
+            after: state.save.maxHp,
+            amount: Math.max(0, state.save.maxHp - hpAtVictory),
+          };
+        }
       }
     } else {
       state.save.encounterIndex += 1;
@@ -802,6 +821,20 @@
     $("#chapterStoryEyebrow").textContent = `${chapter.label} RESTORED`;
     $("#chapterStoryTitle").textContent = chapter.clearTitle;
     $("#chapterStoryText").textContent = chapter.clearText;
+    const recovery = chapter.recoveryEvent && state.pendingRecovery;
+    $("#chapterRecovery").hidden = !recovery;
+    if (recovery) {
+      $("#chapterRecoveryTitle").textContent = chapter.recoveryEvent.title;
+      $("#chapterRecoveryText").textContent = chapter.recoveryEvent.text;
+      $("#chapterRecoveryVoice").textContent = chapter.recoveryEvent.voice;
+      $("#chapterRecoveryHp").textContent =
+        `${recovery.before} → ${recovery.after}`;
+      $("#chapterRecoveryAmount").textContent = recovery.amount
+        ? `+${recovery.amount}・全回復`
+        : "HP MAX・全回復";
+      playSound("recover");
+      vibrate([20, 35, 55]);
+    }
     $("#chapterContinueButton").textContent = chapter.nextLabel;
     $("#chapterScreen").style.setProperty(
       "--chapter-background",
@@ -955,6 +988,7 @@
     $("#startJourneyButton").addEventListener("click", renderField);
     $("#chapterContinueButton").addEventListener("click", () => {
       state.pendingChapter = null;
+      state.pendingRecovery = null;
       renderField();
     });
     $("#encounterButton").addEventListener("click", startEncounter);

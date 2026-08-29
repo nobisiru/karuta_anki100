@@ -99,6 +99,11 @@ async function defeatCurrentEnemy(battleNumber) {
       const hpBefore = Number($("#hpText").textContent.split("/")[0]);
       click(cards.find((card) => card.dataset.raceCorrect === "false"));
       assert.match($("#raceStatus").textContent, /お手つき/, "誤札を判定する");
+      assert.match(
+        $("#effectLayer .hp-damage-number").textContent,
+        /-\d+ HP/,
+        "お手つきのHPダメージを大きく表示する",
+      );
       assert.ok(
         Number($("#hpText").textContent.split("/")[0]) < hpBefore,
         "お手つきでHPが減る",
@@ -119,6 +124,11 @@ async function defeatCurrentEnemy(battleNumber) {
         () => /怪異が先に払った/.test($("#raceStatus").textContent),
         "時間切れで怪異が正解札を先取する",
         1200,
+      );
+      assert.match(
+        $("#effectLayer .hp-damage-number").textContent,
+        /-\d+ HP/,
+        "怪異の先取でもHPダメージを大きく表示する",
       );
       assert.ok(
         Number($("#hpText").textContent.split("/")[0]) < hpBefore,
@@ -199,6 +209,32 @@ async function defeatCurrentEnemy(battleNumber) {
         $("#chapterScreen").classList.contains("active"),
         "章クリア物語へ進む",
       );
+      if (battle === 3) {
+        assert.equal(
+          $("#chapterRecovery").hidden,
+          false,
+          "一階クリア後にHP回復イベントが起きる",
+        );
+        assert.match(
+          $("#chapterRecoveryAmount").textContent,
+          /全回復/,
+          "回復イベントでHP全回復を表示する",
+        );
+        const floorClearSave = JSON.parse(
+          window.localStorage.getItem("hyakushu_ibun_save_v2"),
+        );
+        assert.equal(
+          floorClearSave.hp,
+          floorClearSave.maxHp,
+          "一階クリア時にHPを最大値まで回復する",
+        );
+      } else {
+        assert.equal(
+          $("#chapterRecovery").hidden,
+          true,
+          "HP回復イベントは一階クリア時だけ表示する",
+        );
+      }
       click("#chapterContinueButton");
       assert.ok(
         $("#fieldScreen").classList.contains("active"),

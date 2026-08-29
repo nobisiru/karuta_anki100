@@ -141,6 +141,11 @@ assert.equal(migrated.chapterIndex, 0, "学校編は一階から始まる");
 assert.equal(migrated.legacy.originalCleared, true, "旧版クリア記録を保持する");
 
 assert.equal(data.campaign.chapters.length, 4, "一階から教員室まで4章ある");
+assert.match(
+  data.campaign.chapters[0].recoveryEvent.title,
+  /保健室/,
+  "一階クリア後に保健室の回復イベントがある",
+);
 assert.equal(data.campaign.totalBattles, 11, "全11戦で4章を完結する");
 assert.equal(data.campaign.rivalSpeeds.length, 11, "全11戦に速度段階がある");
 data.campaign.rivalSpeeds.forEach((profile, index, profiles) => {

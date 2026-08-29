@@ -83,6 +83,11 @@ assert.match(
 );
 assert.match(html, /最初の六枚へ/, "6枚取りで学校編を始める導線がある");
 assert.match(html, /id="raceCards"/, "6枚取りバトルの札場がある");
+assert.match(
+  html,
+  /id="chapterRecovery"/,
+  "一階クリア後のHP回復イベント表示がある",
+);
 assert.doesNotMatch(html, /id="pickerModal"/, "旧5枚デッキ選択を撤去する");
 assert.match(html, /rpg-audio\.js/, "トレーニングの読手音声を共用する");
 for (const sharedKey of ["karuta_local_audio_v1", "karuta_audio_enabled_v1"]) {
