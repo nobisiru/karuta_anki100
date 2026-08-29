@@ -12,6 +12,7 @@ const dom = new JSDOM(html, {
 });
 
 const { window } = dom;
+window.__HYAKUSHU_TEST__ = true;
 window.scrollTo = () => {};
 window.confirm = () => true;
 window.navigator.vibrate = () => true;
@@ -22,65 +23,137 @@ for (const file of [
   "rpg-data.js",
   "rpg-core.js",
   "rpg-art.js",
-  "hyakushu-ibun.js",
+  "rpg-audio.js",
 ]) {
   window.eval(fs.readFileSync(path.join(root, file), "utf8"));
 }
 
+const readerCalls = [];
+window.HyakushuRpgAudio.playPoem = async (no) => {
+  readerCalls.push(Number(no));
+  return false;
+};
+window.HyakushuRpgAudio.stop = () => {};
+window.HyakushuRpgAudio.unlock = () => {};
+window.HyakushuRpgAudio.status = async () => ({
+  enabled: true,
+  count: 100,
+  label: "読手音声 ON・100/100首",
+});
+
+window.eval(fs.readFileSync(path.join(root, "hyakushu-ibun.js"), "utf8"));
+
 const $ = (selector) => window.document.querySelector(selector);
 const click = (selector) => {
   const element = typeof selector === "string" ? $(selector) : selector;
-  assert.ok(element, `クリック対象がある: ${selector}`);
+  assert.ok(element, "クリック対象がある");
   element.click();
 };
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function waitFor(predicate, message, timeout = 800) {
+  const started = Date.now();
+  while (Date.now() - started < timeout) {
+    if (predicate()) return;
+    await wait(8);
+  }
+  assert.fail(message);
+}
 
-async function defeatCurrentEnemy() {
-  assert.equal($("#sealLayer").children.length, 3, "決まり字が3枚表示される");
+let mistakeChecked = false;
+let opponentChecked = false;
+
+async function defeatCurrentEnemy(battleNumber) {
+  assert.equal($("#sealLayer").children.length, 3, "三本勝負が表示される");
   assert.ok(
     $("#monsterArt .painted-monster"),
     "怪異の画家調アートが描画される",
   );
-  click("#openPickerButton");
-  const recommendedNos = [
-    ...window.document.querySelectorAll("#pickerGrid [data-pick]"),
-  ].map((card) => Number(card.dataset.pick));
-  assert.deepEqual(
-    recommendedNos,
-    [...recommendedNos].sort((a, b) => a - b),
-    "今回の候補札が歌番号順に並ぶ",
-  );
-  const exactNos = [...window.document.querySelectorAll(".enemy-seal")].map(
-    (seal) => Number(seal.dataset.poem),
-  );
-  for (const no of exactNos) click(`[data-pick="${no}"]`);
-  while (
-    window.document.querySelectorAll('.picker-card[aria-pressed="true"]')
-      .length < 5
-  ) {
-    const next = [
-      ...window.document.querySelectorAll('.picker-card[aria-pressed="false"]'),
-    ].find((button) => !button.disabled);
-    click(next);
-  }
-  assert.equal($("#pickerModal").hidden, true, "5枚目で札選択が自動で閉じる");
   assert.equal(
-    $("#deckReadyModal").hidden,
-    false,
-    "5枚目でバトル確認がポップアップする",
+    window.document.querySelectorAll("#speedPips .active").length,
+    battleNumber,
+    "戦う順に相手の速度段階が上がる",
   );
-  assert.equal(
-    $("#slots").querySelectorAll(".uta-card").length,
-    5,
-    "歌珠を5枚セットできる",
-  );
-  click("#readyBattleButton");
-  for (const no of exactNos) {
-    click(`[data-attack="${no}"]`);
-    await wait(120);
+
+  for (let round = 0; round < 3; round += 1) {
+    await waitFor(
+      () =>
+        !$("#raceCards").classList.contains("waiting") &&
+        $("#raceCards").children.length === 6,
+      "6枚が解禁されて読みが始まる",
+    );
+    const cards = [...$("#raceCards").querySelectorAll("[data-race-no]")];
+    assert.equal(cards.length, 6, "毎問6枚の取り札が並ぶ");
+    assert.equal(
+      new Set(cards.map((card) => card.dataset.raceNo)).size,
+      6,
+      "6枚に重複がない",
+    );
+    assert.equal(
+      cards.filter((card) => card.dataset.raceCorrect === "true").length,
+      1,
+      "正解札は1枚だけ",
+    );
+
+    if (!mistakeChecked) {
+      mistakeChecked = true;
+      const hpBefore = Number($("#hpText").textContent.split("/")[0]);
+      click(cards.find((card) => card.dataset.raceCorrect === "false"));
+      assert.match($("#raceStatus").textContent, /お手つき/, "誤札を判定する");
+      assert.ok(
+        Number($("#hpText").textContent.split("/")[0]) < hpBefore,
+        "お手つきでHPが減る",
+      );
+      await waitFor(
+        () =>
+          !$("#raceCards").classList.contains("waiting") &&
+          $("#raceCards").children.length === 6 &&
+          $("#raceStatus").textContent === "読み進行中",
+        "同じ一首を6枚で再挑戦できる",
+      );
+    }
+
+    if (!opponentChecked) {
+      opponentChecked = true;
+      const hpBefore = Number($("#hpText").textContent.split("/")[0]);
+      await waitFor(
+        () => /怪異が先に払った/.test($("#raceStatus").textContent),
+        "時間切れで怪異が正解札を先取する",
+        1200,
+      );
+      assert.ok(
+        Number($("#hpText").textContent.split("/")[0]) < hpBefore,
+        "怪異の先取でHPが減る",
+      );
+      await waitFor(
+        () =>
+          !$("#raceCards").classList.contains("waiting") &&
+          $("#raceStatus").textContent === "読み進行中",
+        "怪異に取られた一首を再挑戦できる",
+      );
+    }
+
+    const correct = $('#raceCards [data-race-correct="true"]');
+    click(correct);
+    assert.equal(
+      window.document.querySelectorAll("#sealLayer .broken").length,
+      round + 1,
+      "正解するたび封印が一つ結ばれる",
+    );
+
+    if (round < 2) {
+      await waitFor(
+        () =>
+          !$("#raceCards").classList.contains("waiting") &&
+          $("#raceStatus").textContent === "読み進行中",
+        "次の一首が自動で始まる",
+      );
+    }
   }
-  await wait(150);
-  assert.equal($("#resultModal").hidden, false, "3枚破断で討伐結果が出る");
+
+  await waitFor(
+    () => $("#resultModal").hidden === false,
+    "三首先取で討伐結果が出る",
+  );
   assert.equal($("#rewardRows").children.length, 3, "3首へカケラが付与される");
 }
 
@@ -106,28 +179,25 @@ async function defeatCurrentEnemy() {
   assert.equal($("#routeNodes").children.length, 3, "一階の3戦が表示される");
   assert.equal($("#schoolFloors").children.length, 4, "校内4章が表示される");
 
-  click("#encounterButton");
-  assert.ok($("#battleScreen").classList.contains("active"), "怪異戦へ進む");
-  await defeatCurrentEnemy();
-
-  click("#resultDoneButton");
-  assert.ok(
-    $("#fieldScreen").classList.contains("active"),
-    "結果からフィールドへ戻る",
-  );
-  const save = JSON.parse(window.localStorage.getItem("hyakushu_ibun_save_v2"));
-  assert.equal(save.chapterIndex, 0, "1戦目は一階にいる");
-  assert.equal(save.encounterIndex, 1, "1戦目の進行が保存される");
-  assert.equal(save.totalShards, 9, "歌のカケラが保存される");
-
-  for (let battle = 2; battle <= 11; battle += 1) {
+  for (let battle = 1; battle <= 11; battle += 1) {
     click("#encounterButton");
-    await defeatCurrentEnemy();
+    assert.ok($("#battleScreen").classList.contains("active"), "怪異戦へ進む");
+    if (battle === 11) {
+      assert.equal($("#rivalRank").textContent, "名人級", "最終戦は名人級");
+      assert.match(
+        $("#enemyName").textContent,
+        /校長.*藤原道長/,
+        "藤原道長に憑依された校長と戦う",
+      );
+    }
+
+    await defeatCurrentEnemy(battle);
     click("#resultDoneButton");
+
     if ([3, 6, 9].includes(battle)) {
       assert.ok(
         $("#chapterScreen").classList.contains("active"),
-        `${battle}戦目で章クリア物語へ進む`,
+        "章クリア物語へ進む",
       );
       click("#chapterContinueButton");
       assert.ok(
@@ -137,14 +207,14 @@ async function defeatCurrentEnemy() {
     } else if (battle < 11) {
       assert.ok(
         $("#fieldScreen").classList.contains("active"),
-        `${battle}戦目から校内マップへ戻る`,
+        "討伐後に校内マップへ戻る",
       );
     }
   }
 
   assert.ok(
     $("#victoryScreen").classList.contains("active"),
-    "道長撃破後に学校編クリア画面へ進む",
+    "道長から校長を救って学校編クリア画面へ進む",
   );
   const clearSave = JSON.parse(
     window.localStorage.getItem("hyakushu_ibun_save_v2"),
@@ -158,10 +228,16 @@ async function defeatCurrentEnemy() {
     "一階から教員室まで4章の完了を保存する",
   );
   assert.equal(clearSave.maxHp, 130, "一階報酬で最大HPが上がる");
-  assert.equal(clearSave.maxMp, 110, "二階報酬で最大MPが上がる");
+  assert.equal(clearSave.maxMp, 110, "二階報酬の成長も旧セーブ互換で残る");
   assert.equal(clearSave.guardBonus, 2, "三階報酬で守りが上がる");
+  assert.equal(
+    readerCalls.length,
+    35,
+    "全33首とお手つき・怪異先取の再戦で音声を呼ぶ",
+  );
+  assert.ok(readerCalls.every((no) => no >= 1 && no <= 100));
 
-  console.log("百首異聞 DOM smoke test: OK");
+  console.log("百首異聞 6枚取り DOM smoke test: OK");
   dom.window.close();
 })().catch((error) => {
   console.error(error);

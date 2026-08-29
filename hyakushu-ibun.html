@@ -67,7 +67,7 @@
           </div>
           <div class="title-actions">
             <div class="title-promise">
-              五枚の札と仲間の声で、いつもの学校を取り戻そう。
+              六枚の札を見渡し、読手の声から一枚を取ろう。
             </div>
             <button
               id="continueButton"
@@ -112,14 +112,14 @@
               すず「怖いって言っていい。でも、一人では行かない」
             </blockquote>
             <p>
-              すず、こよみ、まひる、そしてあなた。五枚の歌札で三つの決まり字封印を破り、平穏な学校生活を取り戻そう。
+              すず、こよみ、まひる、そしてあなた。並んだ六枚から読まれた札を怪異より先に取り、三つの歌を結んで平穏な学校生活を取り戻そう。
             </p>
             <button
               id="startJourneyButton"
               class="primary-button ink"
               type="button"
             >
-              五枚を手に取る
+              最初の六枚へ
             </button>
           </div>
         </section>
@@ -138,7 +138,7 @@
             <div class="club-voices" aria-label="かるた部員">
               <span><b>すず</b>部長・一音を信じる</span>
               <span><b>こよみ</b>歌の物語を読む</span>
-              <span><b>まひる</b>五枚のつながりを見る</span>
+              <span><b>まひる</b>六枚を一目で見渡す</span>
             </div>
             <button
               id="chapterContinueButton"
@@ -192,9 +192,13 @@
               <div><span>体力 HP</span><b id="hpText">120 / 120</b></div>
               <div class="meter-track"><i id="hpBar"></i></div>
             </div>
-            <div class="meter-card mp-meter">
-              <div><span>集中 MP</span><b id="mpText">100 / 100</b></div>
-              <div class="meter-track"><i id="mpBar"></i></div>
+            <div class="meter-card rival-meter">
+              <div><span>相手の速さ</span><b id="rivalRank">かるた入門</b></div>
+              <div
+                id="speedPips"
+                class="speed-pips"
+                aria-label="相手の強さ"
+              ></div>
             </div>
           </div>
 
@@ -210,65 +214,41 @@
               id="sealLayer"
               class="seal-layer"
               role="group"
-              aria-label="怪異の決まり字"
+              aria-label="三本勝負の進み具合"
             ></div>
             <div id="effectLayer" class="effect-layer" aria-hidden="true"></div>
           </article>
 
-          <div id="setupPanel" class="battle-panel">
+          <div id="racePanel" class="battle-panel race-panel">
             <div class="phase-heading">
               <div>
-                <span>MY FIVE CARDS</span>
-                <h3>歌珠を5枚えらぶ</h3>
+                <span>SIX CARD RACE</span>
+                <h3>読まれた下の句札を先に取る</h3>
               </div>
-              <b id="slotCount">0 / 5</b>
+              <b id="raceProgress">一首目 / 三首</b>
             </div>
-            <p class="guidance">
-              怪異に浮かぶ3つの決まり字を見て、対応する下の句札を選ぼう。残り2枚は、好きな共鳴をつくるチャンス。
-            </p>
             <div
-              id="slots"
-              class="card-slots"
-              role="group"
-              aria-label="選んだ歌珠"
-            ></div>
-            <div id="linkPreview" class="link-preview" aria-live="polite"></div>
-            <div class="setup-actions">
-              <button
-                id="openPickerButton"
-                class="secondary-button"
-                type="button"
-              >
-                札をえらぶ
-              </button>
-              <button
-                id="bindButton"
-                class="primary-button compact"
-                type="button"
-                disabled
-              >
-                この5枚で戦う
-              </button>
-            </div>
-          </div>
-
-          <div id="fightPanel" class="battle-panel" hidden>
-            <div class="phase-heading">
-              <div>
-                <span>KIMARI-JI BATTLE</span>
-                <h3>決まり字に合う札をタップ</h3>
-              </div>
-              <b id="turnLabel">あなたの番</b>
-            </div>
-            <div id="activeLinks" class="link-preview active-links"></div>
-            <div id="actionCards" class="action-cards"></div>
-            <button
-              id="recoverButton"
-              class="secondary-button full"
-              type="button"
+              id="raceReader"
+              class="race-reader previewing"
+              role="status"
+              aria-live="polite"
             >
-              ひと息つく <small>MP +25</small>
-            </button>
+              <span id="raceStatus">まず六枚の位置を見よう</span>
+              <div id="raceStream" class="race-stream">5</div>
+              <small id="raceHelp">読み始めるまであと5秒</small>
+            </div>
+            <div
+              id="raceCards"
+              class="race-cards waiting"
+              role="group"
+              aria-label="六枚の取り札"
+            ></div>
+            <div id="raceFeedback" class="race-feedback" aria-live="polite">
+              札の位置を覚えて、声に集中しよう。
+            </div>
+            <div id="audioStatusChip" class="audio-status-chip">
+              文字読み・音声を確認中
+            </div>
           </div>
 
           <div
@@ -288,7 +268,7 @@
           <span class="eyebrow">SCHOOL LIFE RESTORED</span>
           <h2 id="victoryTitle">いつもの朝が帰ってきた</h2>
           <p>
-            名札、チャイム、本をめくる音、廊下の笑い声。百枚の札が机へ戻り、かるた部はまた最初の五枚を並べる。
+            名札、チャイム、本をめくる音、廊下の笑い声。校長もいつもの穏やかな声を取り戻し、かるた部はまた六枚の札を並べる。
           </p>
           <div class="victory-stats">
             <div><span>討伐</span><b id="victoryBattles">5</b></div>
@@ -307,58 +287,6 @@
           </button>
         </section>
       </main>
-    </div>
-
-    <div
-      id="pickerModal"
-      class="modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="pickerTitle"
-      hidden
-    >
-      <div class="modal-sheet picker-sheet">
-        <div class="modal-handle" aria-hidden="true"></div>
-        <div class="modal-header">
-          <div>
-            <span class="eyebrow dark">TORIFUDA SELECT</span>
-            <h2 id="pickerTitle">下の句札を選ぶ</h2>
-          </div>
-          <button
-            id="closePickerButton"
-            class="round-close"
-            type="button"
-            aria-label="閉じる"
-          >
-            ×
-          </button>
-        </div>
-        <div class="picker-tabs" role="tablist">
-          <button
-            class="picker-tab active"
-            data-view="recommended"
-            type="button"
-          >
-            今回の候補
-          </button>
-          <button class="picker-tab" data-view="all" type="button">
-            全100首
-          </button>
-        </div>
-        <div id="pickerSearchWrap" class="picker-search" hidden>
-          <input
-            id="pickerSearch"
-            type="search"
-            inputmode="search"
-            placeholder="番号・下の句で絞り込む"
-            aria-label="札を検索"
-          />
-        </div>
-        <p id="pickerHint" class="picker-hint">
-          正解札3枚と、共鳴を組みやすい札が含まれています。
-        </p>
-        <div id="pickerGrid" class="picker-grid"></div>
-      </div>
     </div>
 
     <div
@@ -449,30 +377,17 @@
             ><b>演出を控えめに</b><small>大きな動きや点滅を減らす</small></span
           ><input id="motionToggle" type="checkbox"
         /></label>
+        <div class="shared-audio-row">
+          <span
+            ><b>読手音声</b
+            ><small id="settingsAudioStatus"
+              >トレーニングモードの設定を共用します</small
+            ></span
+          >
+          <a href="index.html">音声設定</a>
+        </div>
         <button id="resetButton" class="danger-button" type="button">
           学校編のセーブを消す
-        </button>
-      </div>
-    </div>
-
-    <div
-      id="deckReadyModal"
-      class="modal centered deck-ready-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="deckReadyTitle"
-      hidden
-    >
-      <div class="deck-ready-card">
-        <span class="eyebrow dark">FIVE CARDS READY</span>
-        <h2 id="deckReadyTitle">五枚がそろった！</h2>
-        <p>共鳴を確かめて、このまま決まり字バトルへ進めます。</p>
-        <div id="readyLinks" class="link-preview"></div>
-        <button id="readyBattleButton" class="primary-button" type="button">
-          バトルに進む
-        </button>
-        <button id="readyEditButton" class="text-button dark" type="button">
-          五枚を選び直す
         </button>
       </div>
     </div>
@@ -481,6 +396,7 @@
     <script src="rpg-data.js"></script>
     <script src="rpg-core.js"></script>
     <script src="rpg-art.js"></script>
+    <script src="rpg-audio.js"></script>
     <script src="hyakushu-ibun.js"></script>
   </body>
 </html>

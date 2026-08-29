@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "test": "node tests/rpg-core.test.js && node tests/rpg-assets.test.js && node tests/rpg-smoke.test.js && node tests/voice-mode.test.js",
-    "lint": "html-validate --rule=doctype-style:off --rule=void-style:off hyakushu-ibun.html && prettier --check hyakushu-ibun.html hyakushu-ibun.css hyakushu-ibun.js rpg-data.js rpg-core.js rpg-art.js tests/*.js",
-    "format": "prettier --write hyakushu-ibun.html hyakushu-ibun.css hyakushu-ibun.js rpg-data.js rpg-core.js rpg-art.js tests/*.js"
+    "lint": "html-validate --rule=doctype-style:off --rule=void-style:off hyakushu-ibun.html && prettier --check hyakushu-ibun.html hyakushu-ibun.css hyakushu-ibun.js rpg-data.js rpg-core.js rpg-art.js rpg-audio.js tests/*.js",
+    "format": "prettier --write hyakushu-ibun.html hyakushu-ibun.css hyakushu-ibun.js rpg-data.js rpg-core.js rpg-art.js rpg-audio.js tests/*.js"
   },
   "devDependencies": {
     "html-validate": "9.7.1",

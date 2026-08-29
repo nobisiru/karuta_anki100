@@ -4,6 +4,8 @@
   const DATA = window.HYAKUSHU_IBUN_DATA;
   const Core = window.HyakushuCore;
   const Art = window.HyakushuArt;
+  const ReaderAudio = window.HyakushuRpgAudio;
+  const TEST_MODE = Boolean(window.__HYAKUSHU_TEST__);
   const SAVE_KEY = "hyakushu_ibun_save_v2";
   const OLD_SAVE_KEY = "hyakushu_ibun_save_v1";
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -14,12 +16,12 @@
   const state = {
     save: null,
     battle: null,
-    selected: [],
-    pickerView: "recommended",
     currentScreen: "titleScreen",
     audio: null,
     sessionStartedAt: Date.now(),
     pendingChapter: null,
+    raceToken: 0,
+    raceTimers: [],
   };
 
   const normalize = (value) => String(value || "").replace(/[\s　]/g, "");
@@ -40,7 +42,7 @@
       no: Number(no),
       lower,
       key: DATA.decisionKeys?.[Number(no) - 1] || question?.key || "？",
-      upper: normalize(question?.upper),
+      upper: normalize(DATA.upperPoems?.[Number(no) - 1] || question?.upper),
       tags: Core.tagsForCard(Number(no), DATA.links),
     };
   }
@@ -169,7 +171,6 @@
 
   function startNewGame() {
     state.save = Core.defaultSave(DATA);
-    state.selected = [];
     state.pendingChapter = null;
     persist();
     refreshTitle();
@@ -249,44 +250,109 @@
     return "怪異と対峙する";
   }
 
+  function rivalProfile() {
+    const profiles = DATA.campaign.rivalSpeeds || [];
+    return (
+      profiles[campaignBattleIndex()] ||
+      profiles[profiles.length - 1] || {
+        rank: "かるた入門",
+        charMs: 560,
+        cpuMs: 9000,
+        similarity: 0,
+      }
+    );
+  }
+
+  function shuffle(values) {
+    const result = [...values];
+    for (let index = result.length - 1; index > 0; index -= 1) {
+      const target = Math.floor(Math.random() * (index + 1));
+      [result[index], result[target]] = [result[target], result[index]];
+    }
+    return result;
+  }
+
+  function raceChoices(correctNo, profile) {
+    const correct = poem(correctNo);
+    const pool = window.ALL_LOWER.map((_item, index) => index + 1).filter(
+      (no) => no !== correctNo,
+    );
+    const chosen = [];
+    const addMatches = (length) => {
+      shuffle(pool)
+        .filter(
+          (no) =>
+            poem(no).lower.slice(0, length) === correct.lower.slice(0, length),
+        )
+        .forEach((no) => {
+          if (chosen.length < 5 && !chosen.includes(no)) chosen.push(no);
+        });
+    };
+    if (profile.similarity >= 2) addMatches(2);
+    if (profile.similarity >= 1) addMatches(1);
+    shuffle(pool).forEach((no) => {
+      if (chosen.length < 5 && !chosen.includes(no)) chosen.push(no);
+    });
+    return shuffle([correctNo, ...chosen.slice(0, 5)]);
+  }
+
+  function clearRaceTimers() {
+    state.raceToken += 1;
+    state.raceTimers.forEach((timer) => {
+      clearTimeout(timer);
+      clearInterval(timer);
+    });
+    state.raceTimers = [];
+    ReaderAudio?.stop();
+  }
+
+  function scheduleRace(callback, milliseconds, preserveInTest = false) {
+    const delay =
+      TEST_MODE && !preserveInTest ? Math.min(milliseconds, 24) : milliseconds;
+    const timer = setTimeout(callback, delay);
+    state.raceTimers.push(timer);
+    return timer;
+  }
+
   function startEncounter() {
     const enemy = currentEncounter();
     const chapter = currentChapter();
     const isBoss = enemy.boss || enemy.chapterBoss;
-    const maxSealHp = isBoss
-      ? chapter.difficulty.bossSealHp
-      : chapter.difficulty.sealHp;
+    const profile = rivalProfile();
+    ReaderAudio?.unlock();
     state.battle = {
       enemy,
+      profile,
       seals: enemy.sealPoems.map((poemNo) => ({
         poemNo,
-        hp: maxSealHp,
-        maxHp: maxSealHp,
+        hp: 1,
+        maxHp: 1,
       })),
-      busy: false,
-      turn: 1,
+      phase: "preview",
+      currentPoemNo: null,
       counterDamage: isBoss
         ? chapter.difficulty.bossCounter
         : chapter.difficulty.counter,
+      playerTakes: 0,
+      opponentTakes: 0,
+      mistakes: 0,
     };
-    state.selected = [];
     showScreen(
       "battleScreen",
-      enemy.boss ? "第四章　百首匣" : `${chapter.label}　${enemy.place}`,
+      enemy.boss ? "第四章　校長を救え" : `${chapter.label}　${enemy.place}`,
     );
-    $("#setupPanel").hidden = false;
-    $("#fightPanel").hidden = true;
     renderBattle();
-    renderSlots();
     $("#battleLog").innerHTML =
-      `<b>${escapeHtml(enemy.intro)}</b><br>${escapeHtml(enemy.story)}<span class="enemy-threat"><i>危</i>${escapeHtml(enemy.threat)}</span>`;
+      `<b>${escapeHtml(enemy.intro)}</b><span class="enemy-threat"><i>危</i>${escapeHtml(enemy.threat)}</span>`;
     const stage = $("#enemyStage");
     stage.style.setProperty(
       "--chapter-background",
       `url("${chapter.background}")`,
     );
+    updateReaderAudioStatus();
     playSound(isBoss ? "boss" : "encounter");
     vibrate(isBoss ? [40, 50, 80] : [35, 45, 35]);
+    startRaceRound();
   }
 
   function renderBattle() {
@@ -305,229 +371,306 @@
       { once: true },
     );
     $("#enemyStage").style.setProperty("--enemy-accent", enemy.palette[2]);
+    const current = seals.findIndex((seal) => seal.hp > 0);
+    const marks = ["一", "二", "三"];
     $("#sealLayer").innerHTML = seals
-      .map((seal) => {
-        const item = poem(seal.poemNo);
-        const broken = seal.hp <= 0 ? "broken" : "";
-        return `<div class="enemy-seal ${broken}" data-poem="${seal.poemNo}" data-hp="${Math.max(0, seal.hp)}" data-max="${seal.maxHp}">${escapeHtml(item.key)}</div>`;
+      .map((seal, index) => {
+        const broken = seal.hp <= 0;
+        return `<div class="enemy-seal race-seal ${broken ? "broken" : ""} ${index === current ? "active" : ""}" data-poem="${seal.poemNo}"><span>${broken ? "結" : marks[index]}</span></div>`;
       })
       .join("");
     updateHud();
+    updateRivalHud();
   }
 
   function updateHud() {
     const save = state.save;
     $("#hpText").textContent = `${Math.round(save.hp)} / ${save.maxHp}`;
-    $("#mpText").textContent = `${Math.round(save.mp)} / ${save.maxMp}`;
     $("#hpBar").style.width =
       `${Core.clamp((save.hp / save.maxHp) * 100, 0, 100)}%`;
-    $("#mpBar").style.width =
-      `${Core.clamp((save.mp / save.maxMp) * 100, 0, 100)}%`;
   }
 
-  function renderSlots() {
-    const slots = Array.from(
-      { length: 5 },
-      (_, index) => state.selected[index] || null,
+  function updateRivalHud() {
+    const profile = state.battle?.profile || rivalProfile();
+    const level = Math.min(
+      DATA.campaign.rivalSpeeds.length,
+      campaignBattleIndex() + 1,
     );
-    $("#slots").innerHTML = slots
-      .map((no) =>
-        no
-          ? `<button class="card-slot" type="button" data-remove="${no}" aria-label="${no}番を外す">${cardMarkup(no)}</button>`
-          : '<button class="card-slot empty" type="button" data-open-picker aria-label="歌珠を選ぶ"></button>',
-      )
-      .join("");
-    $("#slotCount").textContent = `${state.selected.length} / 5`;
-    $("#bindButton").disabled = state.selected.length !== 5;
-    renderLinks($("#linkPreview"), state.selected);
-
-    $$("[data-remove]", $("#slots")).forEach((button) => {
-      button.addEventListener("click", () => {
-        state.selected = state.selected.filter(
-          (no) => no !== Number(button.dataset.remove),
-        );
-        renderSlots();
-      });
-    });
-    $$("[data-open-picker]", $("#slots")).forEach((button) =>
-      button.addEventListener("click", openPicker),
-    );
-  }
-
-  function renderLinks(container, selected) {
-    const active = Core.calculateLinks(selected, DATA.links);
-    container.innerHTML = active.length
-      ? active
-          .map(
-            (link) =>
-              `<span class="link-chip" style="--chip:${link.color}"><i></i>${escapeHtml(link.name)} ×${link.count}</span>`,
-          )
-          .join("")
-      : '<span class="link-empty">同じテーマの札を2枚以上入れると共鳴します</span>';
-  }
-
-  function recommendedCards() {
-    const exact = state.battle.enemy.sealPoems;
-    const exactTags = new Set(
-      exact.flatMap((no) => Core.tagsForCard(no, DATA.links)),
-    );
-    const linked = window.ALL_LOWER.map((_item, index) => index + 1)
-      .filter((no) => !exact.includes(no))
-      .map((no) => ({
-        no,
-        score: Core.tagsForCard(no, DATA.links).filter((tag) =>
-          exactTags.has(tag),
-        ).length,
-      }))
-      .filter((entry) => entry.score > 0)
-      .sort((a, b) => b.score - a.score || a.no - b.no)
-      .slice(0, 9)
-      .map((entry) => entry.no);
-    return [...new Set([...exact, ...linked])]
-      .slice(0, 12)
-      .sort((a, b) => a - b);
-  }
-
-  function openPicker() {
-    state.pickerView = "recommended";
-    $("#pickerSearch").value = "";
-    setModal($("#pickerModal"), true);
-    renderPicker();
-  }
-
-  function renderPicker() {
-    $$(".picker-tab").forEach((button) =>
-      button.classList.toggle(
-        "active",
-        button.dataset.view === state.pickerView,
-      ),
-    );
-    $("#pickerSearchWrap").hidden = state.pickerView !== "all";
-    $("#pickerHint").textContent =
-      state.pickerView === "all"
-        ? "小倉百人一首1〜100番。番号または下の句で検索できます。"
-        : "正解札3枚と、共鳴を組みやすい札が含まれています。";
-    const query = normalize($("#pickerSearch").value).toLowerCase();
-    let cards =
-      state.pickerView === "recommended"
-        ? recommendedCards()
-        : window.ALL_LOWER.map((_item, index) => index + 1);
-    if (query)
-      cards = cards.filter(
-        (no) => String(no).includes(query) || poem(no).lower.includes(query),
-      );
-    $("#pickerGrid").innerHTML = cards
-      .map((no) => {
-        const selected = state.selected.includes(no);
-        const disabled = state.selected.length >= 5 && !selected;
-        return `<button class="picker-card ${selected ? "selected" : ""}" type="button" data-pick="${no}" ${disabled ? "disabled" : ""} aria-pressed="${selected}">${cardMarkup(no)}</button>`;
-      })
-      .join("");
-    $$("[data-pick]", $("#pickerGrid")).forEach((button) =>
-      button.addEventListener("click", () =>
-        toggleCard(Number(button.dataset.pick)),
-      ),
-    );
-  }
-
-  function toggleCard(no) {
-    if (state.selected.includes(no))
-      state.selected = state.selected.filter((value) => value !== no);
-    else if (state.selected.length < 5) state.selected.push(no);
-    playSound("tap");
-    vibrate(12);
-    renderSlots();
-    renderPicker();
-    if (state.selected.length === 5) {
-      setModal($("#pickerModal"), false);
-      renderLinks($("#readyLinks"), state.selected);
-      setModal($("#deckReadyModal"), true);
-      playSound("link");
-      vibrate([15, 25, 45]);
-    }
-  }
-
-  function bindDeck() {
-    if (state.selected.length !== 5) return;
-    setModal($("#deckReadyModal"), false);
-    $("#setupPanel").hidden = true;
-    $("#fightPanel").hidden = false;
-    $("#actionCards").innerHTML = state.selected
+    $("#rivalRank").textContent = profile.rank;
+    $("#speedPips").innerHTML = DATA.campaign.rivalSpeeds
       .map(
-        (no) =>
-          `<button class="action-card" type="button" data-attack="${no}" aria-label="${no}番で攻撃">${cardMarkup(no)}</button>`,
+        (_item, index) =>
+          `<i class="${index < level ? "active" : ""}" aria-hidden="true"></i>`,
       )
       .join("");
-    renderLinks($("#activeLinks"), state.selected);
-    const active = Core.calculateLinks(state.selected, DATA.links);
-    $("#battleLog").innerHTML = active.length
-      ? `<b>《${active.map((link) => link.name).join("・")}》発動！</b><br>五首が光の糸で結ばれた。攻撃する歌珠を選べ。`
-      : "五首を展開した。怪異の決まり字に対応する札なら、封印を一撃で破壊できる。";
-    $$("[data-attack]", $("#actionCards")).forEach((button) =>
-      button.addEventListener("click", () =>
-        attack(Number(button.dataset.attack)),
-      ),
+    $("#speedPips").setAttribute(
+      "aria-label",
+      `相手の強さ ${level} / ${DATA.campaign.rivalSpeeds.length}・${profile.rank}`,
     );
-    playSound(active.length ? "link" : "bind");
-    vibrate(active.length ? [15, 25, 45] : 20);
+  }
+
+  async function updateReaderAudioStatus() {
+    const info = (await ReaderAudio?.status?.()) || {
+      label: "文字読み・音声はトレーニングで設定",
+    };
+    if ($("#audioStatusChip")) $("#audioStatusChip").textContent = info.label;
+    if ($("#settingsAudioStatus"))
+      $("#settingsAudioStatus").textContent = info.label;
   }
 
   function livingSeals() {
     return state.battle.seals.filter((seal) => seal.hp > 0);
   }
 
-  function attack(cardNo) {
-    if (state.battle.busy) return;
-    const exactTarget = livingSeals().find((seal) => seal.poemNo === cardNo);
-    const target = exactTarget || livingSeals()[0];
-    if (!target) return;
-    const outcome = Core.attackOutcome({
-      cardNo,
-      sealPoemNo: target.poemNo,
-      selected: state.selected,
-      shards: state.save.shards,
-      links: DATA.links,
-      boss: state.battle.enemy.boss || state.battle.enemy.chapterBoss,
-      counterBase: state.battle.counterDamage,
-      guardBonus: state.save.guardBonus,
+  function currentRaceIndex() {
+    return state.battle.seals.findIndex((seal) => seal.hp > 0);
+  }
+
+  function raceCardMarkup(no, correctNo) {
+    const item = poem(no);
+    return `<button class="race-card" type="button" data-race-no="${no}" data-race-correct="${no === correctNo ? "true" : "false"}" aria-label="${escapeHtml(item.lower)}">
+      <span class="race-poem">${splitPoem(item.lower)
+        .map((part) => `<i>${escapeHtml(part)}</i>`)
+        .join("")}</span>
+    </button>`;
+  }
+
+  function startRaceRound(options = {}) {
+    clearRaceTimers();
+    if (!state.battle || !livingSeals().length) return;
+    const token = state.raceToken;
+    const roundIndex = currentRaceIndex();
+    const target = state.battle.seals[roundIndex];
+    const profile = state.battle.profile;
+    state.battle.phase = "preview";
+    state.battle.currentPoemNo = target.poemNo;
+
+    const choices = raceChoices(target.poemNo, profile);
+    $("#raceCards").innerHTML = choices
+      .map((no) => raceCardMarkup(no, target.poemNo))
+      .join("");
+    $("#raceCards").className = "race-cards waiting";
+    $("#raceReader").className = "race-reader previewing";
+    $("#raceProgress").textContent =
+      `${["一", "二", "三"][roundIndex]}首目 / 三首`;
+    $("#raceStatus").textContent = options.retry
+      ? "もう一度、六枚を見直そう"
+      : "まず六枚の位置を見よう";
+    $("#raceHelp").textContent = "読み始めるまであと5秒";
+    $("#raceFeedback").textContent =
+      options.message || "声に集中して、先に取ろう。";
+
+    $$("[data-race-no]", $("#raceCards")).forEach((button) =>
+      button.addEventListener("click", () =>
+        takeRaceCard(Number(button.dataset.raceNo), button),
+      ),
+    );
+
+    let remaining = TEST_MODE ? 0 : 5;
+    const tick = () => {
+      if (token !== state.raceToken) return;
+      if (remaining <= 0) {
+        beginRaceReading(token);
+        return;
+      }
+      $("#raceStream").textContent = remaining;
+      $("#raceHelp").textContent =
+        `読み始めるまであと${remaining}秒・札の位置を覚えよう`;
+      remaining -= 1;
+      scheduleRace(tick, 1000);
+    };
+    tick();
+  }
+
+  async function beginRaceReading(token) {
+    if (token !== state.raceToken || !state.battle) return;
+    $("#raceStatus").textContent = "読手が息を吸う――";
+    $("#raceStream").textContent = "読";
+    $("#raceHelp").textContent = "音声に集中";
+    const poemNo = state.battle.currentPoemNo;
+    const started = await ReaderAudio?.playPoem?.(poemNo);
+    if (token !== state.raceToken) {
+      ReaderAudio?.stop();
+      return;
+    }
+    $("#audioStatusChip").classList.toggle("playing", Boolean(started));
+    $("#audioStatusChip").textContent = started
+      ? "読手音声 再生中"
+      : "文字読みで進行中";
+    scheduleRace(
+      () => beginVisualReading(token),
+      started && !TEST_MODE ? 550 : 0,
+    );
+  }
+
+  function readingMarkup(full, visible, keyLength) {
+    return [...full]
+      .slice(0, visible)
+      .map(
+        (char, index) =>
+          `<span class="${index < keyLength ? "decision-sound" : ""}">${escapeHtml(char)}</span>`,
+      )
+      .join("");
+  }
+
+  function beginVisualReading(token) {
+    if (token !== state.raceToken || !state.battle) return;
+    const item = poem(state.battle.currentPoemNo);
+    const profile = state.battle.profile;
+    let visible = 0;
+    let readTimer = null;
+    state.battle.phase = "reading";
+    $("#raceCards").classList.remove("waiting");
+    $("#raceReader").classList.remove("previewing");
+    $("#raceReader").classList.add("reading");
+    $("#raceStatus").textContent = "読み進行中";
+    $("#raceHelp").textContent =
+      `${profile.rank}が同じ札を狙っている・札をタップ！`;
+
+    const advance = () => {
+      if (token !== state.raceToken) return;
+      visible = Math.min(item.upper.length, visible + 1);
+      $("#raceStream").innerHTML = readingMarkup(
+        item.upper,
+        visible,
+        item.key.length,
+      );
+      if (visible >= item.upper.length && readTimer) clearInterval(readTimer);
+    };
+    advance();
+    readTimer = setInterval(advance, TEST_MODE ? 20 : profile.charMs);
+    state.raceTimers.push(readTimer);
+
+    const keyDelay = Math.max(0, item.key.length - 1) * profile.charMs;
+    const jitter = 0.88 + Math.random() * 0.24;
+    const opponentDelay = TEST_MODE
+      ? 1000
+      : keyDelay + Math.round(profile.cpuMs * jitter);
+    scheduleRace(() => opponentTake(token), opponentDelay, TEST_MODE);
+  }
+
+  function disableRaceCards() {
+    $$("[data-race-no]", $("#raceCards")).forEach((button) => {
+      button.disabled = true;
     });
-    if (!outcome.exact && state.save.mp < outcome.mpCost) {
-      $("#battleLog").innerHTML =
-        "<b>MPが足りない。</b><br>『息を整える』でMPを回復しよう。";
-      playSound("error");
-      vibrate([20, 30, 20]);
+  }
+
+  function takeRaceCard(no, button) {
+    if (!state.battle || state.battle.phase !== "reading") return;
+    const correctNo = state.battle.currentPoemNo;
+    clearRaceTimers();
+    state.battle.phase = "resolved";
+    disableRaceCards();
+
+    if (no === correctNo) {
+      const target = state.battle.seals.find(
+        (seal) => seal.poemNo === correctNo && seal.hp > 0,
+      );
+      if (target) target.hp = 0;
+      state.battle.playerTakes += 1;
+      button.classList.add("correct");
+      $("#raceReader").className = "race-reader won";
+      $("#raceStatus").textContent = "あなたが先に取った！";
+      $("#raceStream").textContent = poem(correctNo).key;
+      $("#raceHelp").textContent = `${correctNo}番・封印を一首接続`;
+      $("#raceFeedback").innerHTML =
+        `<b>一首接続――${escapeHtml(poem(correctNo).key)}、封印破断！</b>`;
+      renderBattle();
+      playAttackEffect({ exact: true, damage: 999 });
+      if (!livingSeals().length)
+        scheduleRace(
+          finishBattle,
+          state.save.settings.reducedMotion ? 60 : 850,
+        );
+      else
+        scheduleRace(
+          () => startRaceRound(),
+          state.save.settings.reducedMotion ? 60 : 800,
+        );
       return;
     }
 
-    state.battle.busy = true;
-    state.save.mp = Core.clamp(
-      state.save.mp - outcome.mpCost + outcome.mpRecovery,
-      0,
-      state.save.maxMp,
-    );
-    state.save.hp = Core.clamp(
-      state.save.hp + outcome.heal,
-      0,
-      state.save.maxHp,
-    );
-    target.hp = Math.max(0, target.hp - outcome.damage);
-    renderBattle();
-    playAttackEffect(outcome);
+    state.battle.mistakes += 1;
+    button.classList.add("wrong");
+    const correctButton = $('[data-race-correct="true"]', $("#raceCards"));
+    correctButton?.classList.add("missed");
+    $("#raceReader").className = "race-reader lost";
+    $("#raceStatus").textContent = "お手つき！";
+    $("#raceStream").textContent = "待";
+    $("#raceHelp").textContent = "同じ一首へ、もう一度挑戦";
+    $("#raceFeedback").innerHTML =
+      `<b>その札ではない。</b> 正解は「${escapeHtml(poem(correctNo).lower)}」。`;
+    playSound("error");
+    vibrate([24, 35, 24]);
+    if (!applyRaceDamage("お手つき"))
+      scheduleRace(
+        () =>
+          startRaceRound({
+            retry: true,
+            message: "深呼吸。今度は決まり字まで聞いて取ろう。",
+          }),
+        state.save.settings.reducedMotion ? 80 : 1050,
+      );
+  }
 
-    const targetKey = poem(target.poemNo).key;
-    $("#battleLog").innerHTML = outcome.exact
-      ? `<b>一首接続――${escapeHtml(targetKey)}、封印破断！</b><br>${cardNo}番の下の句が決まり字へつながった。MP消費なし。`
-      : `<b>${outcome.damage} DAMAGE</b><br>${cardNo}番・Lv.${outcome.level}の共鳴攻撃。封印「${escapeHtml(targetKey)}」HP ${target.hp}/${target.maxHp}。`;
-
-    if (!livingSeals().length) {
-      setTimeout(finishBattle, state.save.settings.reducedMotion ? 60 : 900);
+  function opponentTake(token) {
+    if (
+      token !== state.raceToken ||
+      !state.battle ||
+      state.battle.phase !== "reading"
+    )
       return;
-    }
-
+    const correctNo = state.battle.currentPoemNo;
+    clearRaceTimers();
+    state.battle.phase = "resolved";
+    state.battle.opponentTakes += 1;
+    disableRaceCards();
+    const correctButton = $('[data-race-correct="true"]', $("#raceCards"));
+    correctButton?.classList.add("taken");
+    $("#raceReader").className = "race-reader lost";
+    $("#raceStatus").textContent = "怪異が先に払った！";
+    $("#raceStream").textContent = poem(correctNo).key;
+    $("#raceHelp").textContent =
+      `${state.battle.profile.rank}の速さ・同じ一首へ再挑戦`;
+    $("#raceFeedback").innerHTML =
+      `<b>${escapeHtml(state.battle.enemy.name)}が先取。</b> 決まり字は「${escapeHtml(poem(correctNo).key)}」。`;
+    $("#effectLayer").innerHTML = '<i class="opponent-hand"></i>';
+    playSound("counter");
+    vibrate([45, 25, 25]);
     setTimeout(
-      () => enemyCounter(outcome.counterDamage),
-      state.save.settings.reducedMotion ? 60 : 650,
+      () => {
+        $("#effectLayer").innerHTML = "";
+      },
+      TEST_MODE ? 24 : 500,
     );
+    if (!applyRaceDamage("先取"))
+      scheduleRace(
+        () =>
+          startRaceRound({
+            retry: true,
+            message: "取られた一首は、その場でもう一度取り返せる。",
+          }),
+        state.save.settings.reducedMotion ? 80 : 1050,
+      );
+  }
+
+  function applyRaceDamage(reason) {
+    const damage = Math.max(
+      2,
+      state.battle.counterDamage - (state.save.guardBonus || 0),
+    );
+    state.save.hp = Math.max(0, state.save.hp - damage);
+    updateHud();
+    const stage = $("#enemyStage");
+    stage.classList.add("counter");
+    setTimeout(() => stage.classList.remove("counter"), TEST_MODE ? 24 : 420);
+    $("#raceFeedback").innerHTML +=
+      `<small>${escapeHtml(reason)}で HP -${damage}</small>`;
+    if (state.save.hp <= 0) {
+      scheduleRace(revive, state.save.settings.reducedMotion ? 80 : 700);
+      return true;
+    }
+    return false;
   }
 
   function playAttackEffect(outcome) {
@@ -538,68 +681,40 @@
     void stage.offsetWidth;
     stage.classList.toggle("exact-hit", outcome.exact);
     stage.classList.add("hit");
-    setTimeout(() => {
-      layer.innerHTML = "";
-      stage.classList.remove("hit", "exact-hit");
-    }, 900);
+    setTimeout(
+      () => {
+        layer.innerHTML = "";
+        stage.classList.remove("hit", "exact-hit");
+      },
+      TEST_MODE ? 24 : 900,
+    );
     playSound(outcome.exact ? "exact" : "hit");
     vibrate(outcome.exact ? [25, 35, 85] : 35);
   }
 
-  function enemyCounter(damage) {
-    state.save.hp = Math.max(0, state.save.hp - damage);
-    updateHud();
-    const stage = $("#enemyStage");
-    stage.classList.add("counter");
-    setTimeout(() => stage.classList.remove("counter"), 420);
-    playSound("counter");
-    vibrate([45, 25, 25]);
-    if (state.save.hp <= 0) {
-      setTimeout(revive, state.save.settings.reducedMotion ? 50 : 550);
-      return;
-    }
-    state.battle.turn += 1;
-    $("#turnLabel").textContent = `${state.battle.turn}手目`;
-    $("#battleLog").innerHTML += `<br>怪異の反撃――HP -${damage}。`;
-    state.battle.busy = false;
-  }
-
-  function recover() {
-    if (state.battle.busy) return;
-    state.battle.busy = true;
-    state.save.mp = Math.min(state.save.maxMp, state.save.mp + 25);
-    updateHud();
-    $("#battleLog").innerHTML =
-      "<b>息を整え、歌の流れを取り戻した。MP +25。</b>";
-    playSound("recover");
-    setTimeout(
-      () =>
-        enemyCounter(
-          Math.max(2, state.battle.counterDamage - state.save.guardBonus),
-        ),
-      state.save.settings.reducedMotion ? 60 : 550,
-    );
-  }
-
   function revive() {
+    clearRaceTimers();
     playSound("defeat");
     state.save.hp = state.save.maxHp;
     state.save.mp = state.save.maxMp;
     state.battle.seals.forEach((seal) => {
       seal.hp = seal.maxHp;
     });
-    state.battle.busy = false;
-    state.battle.turn = 1;
-    state.selected = [];
-    $("#setupPanel").hidden = false;
-    $("#fightPanel").hidden = true;
+    state.battle.phase = "preview";
     renderBattle();
-    renderSlots();
     $("#battleLog").innerHTML =
-      "<b>百首の加護があなたを戦いの前へ戻した。</b><br>札の組み合わせを変えて、もう一度挑もう。";
+      "<b>仲間の声が、あなたを勝負の前へ戻した。</b><br>三首とも取り直して、怪異より先に札を払おう。";
+    scheduleRace(
+      () =>
+        startRaceRound({
+          message: "すず「大丈夫。札を見て、声を待とう」",
+        }),
+      state.save.settings.reducedMotion ? 80 : 900,
+    );
   }
 
   function finishBattle() {
+    clearRaceTimers();
     const enemy = state.battle.enemy;
     const chapter = currentChapter();
     const isChapterEnd =
@@ -646,12 +761,12 @@
 
   function showResult(enemy, rewards) {
     $("#resultTitle").textContent = enemy.boss
-      ? "月の支配を破った！"
+      ? "校長を満月から救い出した！"
       : enemy.chapterBoss
         ? "この階の平穏を取り戻した！"
         : "歌を取り戻した！";
     $("#resultSummary").textContent = enemy.boss
-      ? "百首と学校の記憶が、満月から解き放たれた。"
+      ? "藤原道長の残響がほどけ、校長と学校の記憶が満月から解き放たれた。"
       : enemy.chapterBoss
         ? `${enemy.name}の封印がほどけ、校舎に日常の色が戻り始めた。`
         : `${enemy.name}を鎮め、三つの歌のカケラを取り戻した。`;
@@ -831,6 +946,7 @@
 
   function bindEvents() {
     $("#topButton").addEventListener("click", () => {
+      clearRaceTimers();
       persist();
       location.href = "index.html";
     });
@@ -842,38 +958,22 @@
       renderField();
     });
     $("#encounterButton").addEventListener("click", startEncounter);
-    $("#openPickerButton").addEventListener("click", openPicker);
-    $("#bindButton").addEventListener("click", bindDeck);
-    $("#readyBattleButton").addEventListener("click", bindDeck);
-    $("#readyEditButton").addEventListener("click", () => {
-      setModal($("#deckReadyModal"), false);
-      openPicker();
-    });
-    $("#recoverButton").addEventListener("click", recover);
     $("#resultDoneButton").addEventListener("click", finishResult);
     $("#collectionButton").addEventListener("click", openCollection);
     $("#victoryCollectionButton").addEventListener("click", openCollection);
     $("#returnTopButton").addEventListener("click", () => {
+      clearRaceTimers();
       persist();
       location.href = "index.html";
     });
-    $("#closePickerButton").addEventListener("click", () =>
-      setModal($("#pickerModal"), false),
-    );
     $("#closeCollectionButton").addEventListener("click", () =>
       setModal($("#collectionModal"), false),
     );
-    $("#pickerSearch").addEventListener("input", renderPicker);
-    $$(".picker-tab").forEach((button) =>
-      button.addEventListener("click", () => {
-        state.pickerView = button.dataset.view;
-        renderPicker();
-      }),
-    );
 
-    $("#settingsButton").addEventListener("click", () =>
-      setModal($("#settingsModal"), true),
-    );
+    $("#settingsButton").addEventListener("click", () => {
+      updateReaderAudioStatus();
+      setModal($("#settingsModal"), true);
+    });
     $("#closeSettingsButton").addEventListener("click", () =>
       setModal($("#settingsModal"), false),
     );
@@ -897,6 +997,7 @@
         )
       )
         return;
+      clearRaceTimers();
       localStorage.removeItem(SAVE_KEY);
       localStorage.removeItem(OLD_SAVE_KEY);
       state.save = Core.defaultSave(DATA, 7261);
@@ -904,27 +1005,30 @@
       refreshTitle();
       showScreen("titleScreen", "花守小学校");
     });
-    [
-      "pickerModal",
-      "collectionModal",
-      "settingsModal",
-      "deckReadyModal",
-    ].forEach((id) => {
+    ["collectionModal", "settingsModal"].forEach((id) => {
       const modal = $("#" + id);
       modal.addEventListener("click", (event) => {
         if (event.target === modal) setModal(modal, false);
       });
     });
-    window.addEventListener("pagehide", persist);
+    window.addEventListener("pagehide", () => {
+      clearRaceTimers();
+      persist();
+    });
     window.addEventListener("beforeunload", persist);
   }
 
   function validateData() {
     const missing = [...DATA.monsters, DATA.boss]
       .flatMap((enemy) => enemy.sealPoems)
-      .filter((no) => !window.ALL_LOWER?.[no - 1] || poem(no).key === "？");
+      .filter(
+        (no) =>
+          !window.ALL_LOWER?.[no - 1] ||
+          poem(no).key === "？" ||
+          !poem(no).upper,
+      );
     if (missing.length)
-      console.warn("百首異聞: 決まり字対応を確認してください", missing);
+      console.warn("百首異聞: 読みデータを確認してください", missing);
   }
 
   function init() {

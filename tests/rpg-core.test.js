@@ -29,6 +29,13 @@ for (const enemy of [...data.monsters, data.boss]) {
 }
 
 assert.equal(data.decisionKeys.length, 100, "RPG用の決まり字は100首分ある");
+assert.equal(data.upperPoems.length, 100, "RPG用の上の句は100首分ある");
+data.upperPoems.forEach((upper, index) =>
+  assert.ok(
+    upper.startsWith(data.decisionKeys[index]),
+    `${index + 1}番の上の句が決まり字から始まる`,
+  ),
+);
 for (const enemy of [...data.monsters, data.boss]) {
   enemy.sealPoems.forEach((no) => {
     assert.ok(
@@ -135,6 +142,26 @@ assert.equal(migrated.legacy.originalCleared, true, "旧版クリア記録を保
 
 assert.equal(data.campaign.chapters.length, 4, "一階から教員室まで4章ある");
 assert.equal(data.campaign.totalBattles, 11, "全11戦で4章を完結する");
+assert.equal(data.campaign.rivalSpeeds.length, 11, "全11戦に速度段階がある");
+data.campaign.rivalSpeeds.forEach((profile, index, profiles) => {
+  assert.ok(profile.charMs > 0, `${index + 1}戦目に読み速度がある`);
+  assert.ok(profile.cpuMs > 0, `${index + 1}戦目に相手速度がある`);
+  if (index > 0)
+    assert.ok(
+      profile.cpuMs < profiles[index - 1].cpuMs,
+      `${index + 1}戦目は前戦より相手が速い`,
+    );
+});
+assert.deepEqual(
+  data.campaign.rivalSpeeds.at(-1),
+  { rank: "名人級", charMs: 320, cpuMs: 1200, similarity: 2 },
+  "校長に憑依した道長はトレーニングの名人級",
+);
+assert.match(
+  data.boss.name,
+  /校長.*藤原道長/,
+  "最終ボスは道長に憑依された校長",
+);
 assert.deepEqual(
   data.campaign.chapters.map((chapter) => chapter.encounters.length),
   [3, 3, 3, 2],

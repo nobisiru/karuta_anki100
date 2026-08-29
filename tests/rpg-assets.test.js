@@ -7,6 +7,12 @@ const html = fs.readFileSync(path.join(root, "hyakushu-ibun.html"), "utf8");
 const launcher = fs.readFileSync(path.join(root, "map-progress.js"), "utf8");
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const gameCss = fs.readFileSync(path.join(root, "hyakushu-ibun.css"), "utf8");
+const audioBridge = fs.readFileSync(path.join(root, "rpg-audio.js"), "utf8");
+const trainingAudio = fs.readFileSync(
+  path.join(root, "local-audio.js"),
+  "utf8",
+);
+const trainingGame = fs.readFileSync(path.join(root, "app.js"), "utf8");
 
 const localAssets = [
   ...html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css))"/g),
@@ -75,8 +81,27 @@ assert.match(
   /放課後かるた部と、消えた百の歌/,
   "学校を守るかるた部の物語を入口にする",
 );
-assert.match(html, /五枚を手に取る/, "学校編を始める導線がある");
-assert.match(html, /id="deckReadyModal"/, "5枚選択後の出陣確認がある");
+assert.match(html, /最初の六枚へ/, "6枚取りで学校編を始める導線がある");
+assert.match(html, /id="raceCards"/, "6枚取りバトルの札場がある");
+assert.doesNotMatch(html, /id="pickerModal"/, "旧5枚デッキ選択を撤去する");
+assert.match(html, /rpg-audio\.js/, "トレーニングの読手音声を共用する");
+for (const sharedKey of ["karuta_local_audio_v1", "karuta_audio_enabled_v1"]) {
+  assert.match(
+    audioBridge,
+    new RegExp(sharedKey),
+    `${sharedKey}をRPGが参照する`,
+  );
+  assert.match(
+    trainingAudio,
+    new RegExp(sharedKey),
+    `${sharedKey}をトレーニングが参照する`,
+  );
+}
+assert.match(
+  trainingGame,
+  /master:\{name:'名人',ms:320,similarity:2,cpu:1200\}/,
+  "トレーニングの名人速度が基準として存在する",
+);
 assert.match(gameCss, /UTA GIRL THEME/, "全画面の新ビジュアルテーマが存在する");
 assert.match(
   gameCss,
