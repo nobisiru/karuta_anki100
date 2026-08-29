@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "hyakushu-ibun.html"), "utf8");
 const launcher = fs.readFileSync(path.join(root, "map-progress.js"), "utf8");
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const gameCss = fs.readFileSync(path.join(root, "hyakushu-ibun.css"), "utf8");
 
 const localAssets = [
   ...html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css))"/g),
@@ -49,6 +50,21 @@ assert.doesNotMatch(
   launcher,
   /location\.href='rpg-monster-v6\.html'/,
   "TOPが旧試作へ戻らない",
+);
+
+assert.match(html, /class="game-shell youthful-theme"/, "少女向けテーマを適用");
+assert.match(
+  html,
+  /歌がつなぐ、月夜の約束/,
+  "物語の入口を新ペルソナ向けにする",
+);
+assert.match(html, /旅をはじめる/, "旅をはじめる導線を維持する");
+assert.match(gameCss, /UTA GIRL THEME/, "全画面の新ビジュアルテーマが存在する");
+assert.match(gameCss, /--sakura: #ee9db6/, "桜色をテーマカラーにする");
+assert.match(
+  gameCss,
+  /\.uta-card[\s\S]*border-color: var\(--green\)/,
+  "競技札の緑枠を維持する",
 );
 
 console.log("百首異聞 asset tests: OK");

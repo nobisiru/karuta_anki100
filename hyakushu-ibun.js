@@ -146,7 +146,7 @@
     state.selected = [];
     persist();
     refreshTitle();
-    showScreen("prologueScreen", "序章　百の封印");
+    showScreen("prologueScreen", "序章　消えた百の歌");
     playSound("open");
   }
 
@@ -181,7 +181,7 @@
         ? "四つの封印が解けた。満月の御殿で、歌を奪った者が待つ。"
         : encounter.intro;
     $("#encounterButton").textContent =
-      index >= 4 ? "望月殿へ入る" : "怪異を追う";
+      index >= 4 ? "望月殿へ入る" : "歌の気配を追う";
 
     const nodes = [
       ...state.save.route.map((id) =>
@@ -554,11 +554,11 @@
 
   function showResult(enemy, rewards) {
     $("#resultTitle").textContent = enemy.boss
-      ? "望月の影　破断"
-      : `${enemy.name}　討伐`;
+      ? "望月の影を破った！"
+      : "歌を取り戻した！";
     $("#resultSummary").textContent = enemy.boss
       ? "奪われた歌が満月から解き放たれた。"
-      : "三つの封印を鎮め、歌のカケラを取り戻した。";
+      : `${enemy.name}を鎮め、三つの歌のカケラを取り戻した。`;
     $("#rewardRows").innerHTML = rewards
       .map(
         (reward) => `<div class="reward-row">
@@ -569,8 +569,8 @@
       )
       .join("");
     $("#resultDoneButton").textContent = enemy.boss
-      ? "平安の夜明けへ"
-      : "月影の道へ戻る";
+      ? "歌が帰る朝へ"
+      : "旅をつづける";
     setModal($("#resultModal"), true);
     playSound("victory");
     vibrate([30, 30, 70, 45, 100]);

@@ -6,13 +6,13 @@
       name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
     />
-    <meta name="theme-color" content="#090a0e" />
+    <meta name="theme-color" content="#27315f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>百首異聞｜第一章 平安編</title>
     <link rel="stylesheet" href="hyakushu-ibun.css" />
   </head>
   <body>
-    <div id="app" class="game-shell">
+    <div id="app" class="game-shell youthful-theme">
       <div class="ambient" aria-hidden="true">
         <i></i><i></i><i></i><i></i><i></i>
       </div>
@@ -47,18 +47,25 @@
           aria-labelledby="gameTitle"
         >
           <div class="title-visual" aria-hidden="true">
+            <div class="title-orbit"></div>
             <div class="title-moon"></div>
             <div class="title-gate"></div>
             <div class="title-seal seal-a">む</div>
             <div class="title-seal seal-b">ちは</div>
             <div class="title-seal seal-c">おく</div>
+            <div class="title-petals">
+              <i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
           </div>
           <div class="title-copy">
-            <span class="eyebrow">HYAKUSHU IBUN</span>
+            <span class="eyebrow">UTA × ADVENTURE</span>
             <h1 id="gameTitle">百首異聞</h1>
-            <p>望月に喰われた歌</p>
+            <p>歌がつなぐ、月夜の約束</p>
           </div>
           <div class="title-actions">
+            <div class="title-promise">
+              決まり字を見つけて、百首の輝きを取り戻そう。
+            </div>
             <button
               id="continueButton"
               class="primary-button"
@@ -78,7 +85,7 @@
               歌珠と怪異の記録
             </button>
           </div>
-          <p class="version-note">平安編・縦切り試作版　10〜15分</p>
+          <p class="version-note">第一章・平安編　プレイ時間10〜15分</p>
         </section>
 
         <section
@@ -87,25 +94,27 @@
           aria-labelledby="prologueTitle"
         >
           <div class="story-paper">
-            <span class="eyebrow dark">PROLOGUE</span>
-            <h2 id="prologueTitle">百の封印</h2>
-            <p>かつて、怪異を鎮めたのは刀でも弓でもなかった。</p>
+            <span class="eyebrow dark">STORY 01</span>
+            <h2 id="prologueTitle">消えた百の歌</h2>
             <p>
-              歌人たちが遺した百の歌は、人の記憶を結び、この国の夜を守る封印となった。
+              満月の夜、百人一首の歌が、人々の記憶から少しずつ消えはじめた。
             </p>
-            <p>だが満月の晩、百首に名を残せなかった権力者が目覚める。</p>
-            <blockquote>
-              「我が栄華より、なぜあの者たちの歌が永く残る――」
-            </blockquote>
             <p>
-              奪われた歌は「歌のカケラ」となり、平安の各地へ散った。三つの決まり字を宿す怪異を鎮め、望月殿へ向かえ。
+              平安の夜へ迷い込んだあなたの手元に残ったのは、いつも覚えていた緑のふちの取り札だけ。
+            </p>
+            <p>
+              決まり字と下の句を結べば、札は「歌珠」となって怪異を鎮める力になる。
+            </p>
+            <blockquote>「百の歌など、月の影に沈めてしまえ――」</blockquote>
+            <p>
+              奪われた歌のカケラを取り戻し、望月殿へ。これは、歌を覚えてきたあなたにしか進めない物語。
             </p>
             <button
               id="startJourneyButton"
               class="primary-button ink"
               type="button"
             >
-              月夜へ踏み出す
+              旅をはじめる
             </button>
           </div>
         </section>
@@ -113,8 +122,8 @@
         <section id="fieldScreen" class="screen" aria-labelledby="fieldTitle">
           <div class="field-heading">
             <div>
-              <span class="eyebrow">HEIAN NIGHT</span>
-              <h2 id="fieldTitle">月影の道</h2>
+              <span class="eyebrow">MOONLIT JOURNEY</span>
+              <h2 id="fieldTitle">歌を取り戻す旅</h2>
             </div>
             <div class="field-resource">
               <span>歌のカケラ</span><b id="fieldShards">0</b>
@@ -177,13 +186,13 @@
           <div id="setupPanel" class="battle-panel">
             <div class="phase-heading">
               <div>
-                <span>PREPARE</span>
-                <h3>歌珠を5枚セット</h3>
+                <span>MY FIVE CARDS</span>
+                <h3>歌珠を5枚えらぶ</h3>
               </div>
               <b id="slotCount">0 / 5</b>
             </div>
             <p class="guidance">
-              怪異に浮かぶ3枚の決まり字を見て、対応する下の句札を選ぼう。残り2枚で共鳴をつくれます。
+              怪異に浮かぶ3つの決まり字を見て、対応する下の句札を選ぼう。残り2枚は、好きな共鳴をつくるチャンス。
             </p>
             <div
               id="slots"
@@ -198,7 +207,7 @@
                 class="secondary-button"
                 type="button"
               >
-                歌珠を選ぶ
+                札をえらぶ
               </button>
               <button
                 id="bindButton"
@@ -206,7 +215,7 @@
                 type="button"
                 disabled
               >
-                五首を結ぶ
+                この5枚で戦う
               </button>
             </div>
           </div>
@@ -214,8 +223,8 @@
           <div id="fightPanel" class="battle-panel" hidden>
             <div class="phase-heading">
               <div>
-                <span>BATTLE</span>
-                <h3>攻撃する歌珠を選ぶ</h3>
+                <span>KIMARI-JI BATTLE</span>
+                <h3>決まり字に合う札をタップ</h3>
               </div>
               <b id="turnLabel">あなたの番</b>
             </div>
@@ -226,7 +235,7 @@
               class="secondary-button full"
               type="button"
             >
-              息を整える <small>MP +25</small>
+              ひと息つく <small>MP +25</small>
             </button>
           </div>
 
@@ -244,9 +253,11 @@
           aria-labelledby="victoryTitle"
         >
           <div class="victory-emblem" aria-hidden="true"><span>百</span></div>
-          <span class="eyebrow">CHAPTER CLEAR</span>
-          <h2 id="victoryTitle">平安の夜明け</h2>
-          <p>望月の影は退き、奪われた歌が人々の記憶へ戻っていく。</p>
+          <span class="eyebrow">HEIAN STORY CLEAR</span>
+          <h2 id="victoryTitle">歌が帰る朝</h2>
+          <p>
+            望月の影は消え、取り戻した歌が、朝の光とともに人々の心へ帰っていく。
+          </p>
           <div class="victory-stats">
             <div><span>討伐</span><b id="victoryBattles">5</b></div>
             <div><span>カケラ</span><b id="victoryShards">0</b></div>
@@ -327,9 +338,9 @@
       hidden
     >
       <div class="result-card">
-        <div class="result-mark">討</div>
-        <span class="eyebrow dark">BATTLE CLEAR</span>
-        <h2 id="resultTitle">怪異 討伐</h2>
+        <div class="result-mark">結</div>
+        <span class="eyebrow dark">UTA RELEASED</span>
+        <h2 id="resultTitle">歌を取り戻した！</h2>
         <p id="resultSummary"></p>
         <div id="rewardRows" class="reward-rows"></div>
         <button id="resultDoneButton" class="primary-button ink" type="button">
