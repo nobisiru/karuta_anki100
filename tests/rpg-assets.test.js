@@ -40,6 +40,19 @@ assert.equal(
   "怪異10体とボス1体の画像が揃う",
 );
 
+const schoolAssets = [
+  "title-karuta-club.webp",
+  "chapter-1-first-floor.webp",
+  "chapter-2-second-floor.webp",
+  "chapter-3-third-floor.webp",
+  "chapter-4-staff-room.webp",
+];
+schoolAssets.forEach((filename) => {
+  const asset = path.join(root, "assets", "school", filename);
+  assert.ok(fs.existsSync(asset), `${filename}の学校ビジュアルが存在する`);
+  assert.ok(fs.statSync(asset).size < 400_000, `${filename}がモバイル向け容量`);
+});
+
 assert.match(index, /map-progress\.js/, "既存TOPがRPGランチャーを読み込む");
 assert.match(
   launcher,
@@ -52,14 +65,24 @@ assert.doesNotMatch(
   "TOPが旧試作へ戻らない",
 );
 
-assert.match(html, /class="game-shell youthful-theme"/, "少女向けテーマを適用");
 assert.match(
   html,
-  /歌がつなぐ、月夜の約束/,
-  "物語の入口を新ペルソナ向けにする",
+  /class="game-shell youthful-theme school-campaign"/,
+  "学校青春テーマを適用",
 );
-assert.match(html, /旅をはじめる/, "旅をはじめる導線を維持する");
+assert.match(
+  html,
+  /放課後かるた部と、消えた百の歌/,
+  "学校を守るかるた部の物語を入口にする",
+);
+assert.match(html, /五枚を手に取る/, "学校編を始める導線がある");
+assert.match(html, /id="deckReadyModal"/, "5枚選択後の出陣確認がある");
 assert.match(gameCss, /UTA GIRL THEME/, "全画面の新ビジュアルテーマが存在する");
+assert.match(
+  gameCss,
+  /HANAMORI SCHOOL CAMPAIGN/,
+  "学校キャンペーンの専用ビジュアルが存在する",
+);
 assert.match(gameCss, /--sakura: #ee9db6/, "桜色をテーマカラーにする");
 assert.match(
   gameCss,

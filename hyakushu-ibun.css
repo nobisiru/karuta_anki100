@@ -1988,6 +1988,527 @@ body.reduced-motion *::after {
   }
 }
 
+/* ================================================================
+   HANAMORI SCHOOL CAMPAIGN
+   Contemporary after-school mystery layered with Heian monster art.
+   ================================================================ */
+
+.school-campaign {
+  --school-indigo: #283465;
+  --school-indigo-deep: #151a3d;
+  --school-crimson: #c44764;
+  --school-sakura: #f1a6ba;
+  --school-paper: #fff8ee;
+  --school-gold: #e4b85a;
+  --school-ink: #332d45;
+  --school-green: #2f6748;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0
+      0 / 28px 28px,
+    radial-gradient(circle at 50% 0%, #5967a0, transparent 42%),
+    linear-gradient(180deg, #283465, #151a3d 72%);
+}
+
+.school-campaign .game-header {
+  background: rgba(30, 38, 83, 0.91);
+  border-bottom-color: rgba(241, 166, 186, 0.42);
+  backdrop-filter: blur(14px);
+}
+
+.school-campaign .header-title span::before {
+  content: "花守小学校・かるた部  ";
+  color: #ffd9e4;
+}
+
+/* Title key art */
+
+.school-title-visual {
+  position: relative;
+  width: calc(100% + 28px);
+  height: clamp(300px, 45dvh, 400px);
+  margin: -12px -14px 0;
+  overflow: hidden;
+  border-radius: 0 0 36px 36px;
+  filter: drop-shadow(0 22px 30px rgba(20, 20, 54, 0.44));
+}
+
+.school-title-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 48%, rgba(34, 31, 73, 0.92) 100%),
+    radial-gradient(circle at 50% 45%, transparent 45%, rgba(24, 24, 59, 0.25));
+  pointer-events: none;
+}
+
+.title-school-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 48%;
+  animation: school-title-breathe 7s ease-in-out infinite alternate;
+}
+
+@keyframes school-title-breathe {
+  to {
+    transform: scale(1.025) translateY(-3px);
+  }
+}
+
+.school-title-visual .title-seal {
+  z-index: 2;
+  animation-duration: 4.2s;
+}
+
+.school-title-visual .seal-a {
+  left: 5%;
+  top: 19%;
+}
+
+.school-title-visual .seal-b {
+  right: 4%;
+  top: 38%;
+}
+
+.school-title-visual .seal-c {
+  left: 10%;
+  bottom: 13%;
+}
+
+.school-campaign .title-copy {
+  z-index: 4;
+  margin-top: -78px;
+  padding: 0 8px;
+  text-align: left;
+}
+
+.school-campaign .title-copy h1 {
+  margin: 1px 0;
+  font-size: clamp(42px, 11.5vw, 58px);
+}
+
+.school-campaign .title-copy p {
+  margin: 0 0 12px;
+  color: #fff4f6;
+  letter-spacing: 0.04em;
+}
+
+.school-campaign .title-actions {
+  z-index: 5;
+}
+
+.school-campaign .title-promise {
+  border-left: 4px solid var(--school-sakura);
+  background: rgba(255, 248, 238, 0.13);
+  text-align: left;
+}
+
+/* Club-log story cards */
+
+.school-campaign .story-screen {
+  background:
+    linear-gradient(rgba(33, 39, 83, 0.52), rgba(21, 26, 61, 0.82)),
+    var(--chapter-background, url("assets/school/chapter-1-first-floor.webp"))
+      center / cover;
+}
+
+.school-campaign .story-paper {
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 31px,
+      rgba(196, 71, 100, 0.18) 32px 33px,
+      transparent 34px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 29px,
+      rgba(65, 74, 125, 0.1) 30px 31px
+    ),
+    linear-gradient(180deg, #fffdf7, #fff5ee);
+  border: 1px solid #f0b3c4;
+  box-shadow: 0 24px 70px rgba(17, 20, 51, 0.55);
+}
+
+.school-campaign .story-paper::after {
+  content: "かるた部";
+  right: 16px;
+  top: 14px;
+  padding: 4px 8px;
+  color: #fff;
+  background: var(--school-crimson);
+  border-radius: 3px;
+  font-family: sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  opacity: 0.88;
+  transform: rotate(3deg);
+}
+
+.chapter-paper {
+  min-height: min(73dvh, 610px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.club-voices {
+  display: grid;
+  gap: 7px;
+  margin: 16px 0 20px;
+}
+
+.club-voices span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  color: #635b72;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #ead3da;
+  border-radius: 11px;
+  font-size: 11px;
+}
+
+.club-voices b {
+  min-width: 52px;
+  color: #fff;
+  background: linear-gradient(135deg, #5968a3, #c44764);
+  border-radius: 999px;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+/* School map */
+
+.school-campaign .field-heading {
+  align-items: flex-end;
+}
+
+.school-field-map {
+  height: min(52dvh, 455px);
+  min-height: 380px;
+  border: 2px solid rgba(255, 224, 232, 0.78);
+  background-image:
+    linear-gradient(180deg, rgba(25, 29, 66, 0.08), rgba(17, 20, 51, 0.72)),
+    var(--chapter-background);
+  background-position: center;
+  background-size: cover;
+}
+
+.school-field-map .map-sky,
+.school-field-map .map-mountains,
+.school-field-map .map-river,
+.school-field-map .map-road {
+  display: none;
+}
+
+.school-field-map .map-mist {
+  z-index: 1;
+  height: 55px;
+  opacity: 0.3;
+}
+
+.school-field-map .route-nodes {
+  z-index: 4;
+  left: auto;
+  right: 12px;
+  top: 12px;
+  bottom: auto;
+  width: 62px;
+  height: calc(100% - 24px);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+}
+
+.school-field-map .route-nodes::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 18%;
+  bottom: 18%;
+  left: 50%;
+  width: 3px;
+  background: linear-gradient(#f3afc0, #fff2c1, #f3afc0);
+  border-radius: 99px;
+  box-shadow: 0 0 14px rgba(255, 226, 172, 0.72);
+}
+
+.school-field-map .route-node,
+.school-field-map .route-node:nth-child(n) {
+  position: relative;
+  inset: auto;
+  width: 50px;
+  height: 50px;
+  transform: none;
+  flex: 0 0 auto;
+  color: #46384f;
+  background: rgba(255, 250, 241, 0.96);
+  border: 2px solid #e8b3c3;
+  box-shadow: 0 8px 22px rgba(21, 23, 55, 0.38);
+}
+
+.school-field-map .route-node.current {
+  color: #fff;
+  background: linear-gradient(135deg, #d65a75, #a83661);
+  border-color: #fff1c9;
+}
+
+.school-floors {
+  position: absolute;
+  z-index: 4;
+  left: 11px;
+  top: 11px;
+  width: min(57%, 218px);
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  list-style: none;
+}
+
+.school-floor {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 46px 1fr 18px;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  color: #5c536a;
+  background: rgba(255, 251, 244, 0.82);
+  border: 1px solid rgba(255, 232, 238, 0.72);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(21, 22, 52, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.school-floor b {
+  color: #4a4567;
+  font-size: 13px;
+}
+
+.school-floor span {
+  overflow: hidden;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.school-floor i {
+  color: #c44764;
+  font-style: normal;
+  text-align: center;
+}
+
+.school-floor.current {
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    rgba(196, 71, 100, 0.94),
+    rgba(70, 76, 139, 0.94)
+  );
+  border-color: #ffe5ae;
+  transform: translateX(4px);
+}
+
+.school-floor.current b,
+.school-floor.current i {
+  color: #fff4c6;
+}
+
+.school-floor.done {
+  background: rgba(244, 255, 244, 0.9);
+  border-color: #9ac2a6;
+}
+
+.school-floor.locked {
+  opacity: 0.55;
+}
+
+.school-campaign .field-panel {
+  border-top: 5px solid var(--school-crimson);
+}
+
+/* Monsters occupy the familiar school, not a separate fantasy void. */
+
+.school-campaign .enemy-stage {
+  border-color: rgba(243, 194, 207, 0.85);
+  background-image:
+    linear-gradient(180deg, rgba(19, 21, 49, 0.16), rgba(16, 15, 35, 0.78)),
+    var(--chapter-background);
+  background-position: center;
+  background-size: cover;
+}
+
+.school-campaign .enemy-stage::before {
+  background:
+    radial-gradient(
+      circle at 50% 52%,
+      color-mix(in srgb, var(--enemy-accent) 36%, transparent),
+      transparent 44%
+    ),
+    linear-gradient(
+      100deg,
+      transparent 12%,
+      rgba(255, 255, 255, 0.08) 48%,
+      transparent 76%
+    );
+}
+
+.school-campaign .enemy-stage::after {
+  background:
+    radial-gradient(ellipse at 50% 92%, rgba(8, 8, 20, 0.74), transparent 55%),
+    linear-gradient(90deg, transparent, rgba(241, 166, 186, 0.24), transparent);
+}
+
+.school-campaign .stage-atmosphere {
+  background:
+    repeating-linear-gradient(
+      105deg,
+      transparent 0 34px,
+      rgba(255, 255, 255, 0.035) 35px 36px
+    ),
+    radial-gradient(
+      ellipse at 50% 84%,
+      rgba(255, 223, 175, 0.18),
+      transparent 54%
+    );
+}
+
+.school-campaign .enemy-heading span {
+  display: inline-block;
+  padding: 3px 8px;
+  color: #fff2c4;
+  background: rgba(34, 29, 64, 0.66);
+  border-radius: 999px;
+}
+
+.school-campaign .battle-panel {
+  border-top: 4px solid var(--school-crimson);
+}
+
+.school-campaign .phase-heading span::before {
+  content: "花守小かるた部 / ";
+}
+
+.school-campaign .battle-log {
+  border-left-width: 5px;
+}
+
+/* Five-card confirmation: one decisive tap into battle. */
+
+.deck-ready-modal {
+  align-items: flex-end;
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
+}
+
+.deck-ready-card {
+  width: min(100%, 430px);
+  padding: 24px 20px 18px;
+  color: var(--school-ink);
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% -10%, #fff, transparent 38%),
+    linear-gradient(180deg, #fffdf8, #fff0ed);
+  border: 2px solid #efafc1;
+  border-radius: 26px 26px 18px 18px;
+  box-shadow: 0 24px 80px rgba(21, 20, 51, 0.62);
+  animation: ready-rise 0.26s ease-out;
+}
+
+.deck-ready-card h2 {
+  margin: 5px 0 6px;
+  color: #493b5d;
+  font-family: "Yu Mincho", serif;
+}
+
+.deck-ready-card p {
+  margin: 0 0 12px;
+  color: #726778;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.deck-ready-card .primary-button {
+  margin-top: 14px;
+}
+
+.text-button.dark {
+  color: #78596a;
+}
+
+@keyframes ready-rise {
+  from {
+    transform: translateY(28px);
+    opacity: 0;
+  }
+}
+
+/* Ending returns visual warmth to the actual school. */
+
+.school-campaign #victoryScreen {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 237, 225, 0.22),
+      rgba(255, 249, 239, 0.94)
+    ),
+    url("assets/school/chapter-1-first-floor.webp") center / cover;
+}
+
+.school-campaign #victoryScreen::after {
+  content: "また、みんなでかるたができる。";
+  margin: 10px 0 4px;
+  color: #9f3b5d;
+  font-family: "Yu Mincho", serif;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+@media (max-height: 760px) {
+  .school-title-visual {
+    height: 286px;
+  }
+
+  .school-campaign .title-copy {
+    margin-top: -66px;
+  }
+
+  .school-field-map {
+    height: 380px;
+    min-height: 330px;
+  }
+
+  .school-floor {
+    min-height: 42px;
+    padding-block: 5px;
+  }
+}
+
+@media (max-width: 360px) {
+  .school-floors {
+    width: 61%;
+  }
+
+  .school-floor {
+    grid-template-columns: 40px 1fr 14px;
+  }
+}
+
+.reduced-motion .title-school-art,
+.reduced-motion .school-field-map .map-mist,
+.reduced-motion .deck-ready-card {
+  animation: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

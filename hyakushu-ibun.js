@@ -4,7 +4,8 @@
   const DATA = window.HYAKUSHU_IBUN_DATA;
   const Core = window.HyakushuCore;
   const Art = window.HyakushuArt;
-  const SAVE_KEY = "hyakushu_ibun_save_v1";
+  const SAVE_KEY = "hyakushu_ibun_save_v2";
+  const OLD_SAVE_KEY = "hyakushu_ibun_save_v1";
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [
     ...root.querySelectorAll(selector),
@@ -18,6 +19,7 @@
     currentScreen: "titleScreen",
     audio: null,
     sessionStartedAt: Date.now(),
+    pendingChapter: null,
   };
 
   const normalize = (value) => String(value || "").replace(/[\s　]/g, "");
@@ -77,17 +79,25 @@
   }
 
   function hasSave() {
-    return Boolean(localStorage.getItem(SAVE_KEY));
+    return Boolean(
+      localStorage.getItem(SAVE_KEY) || localStorage.getItem(OLD_SAVE_KEY),
+    );
   }
 
   function loadSave() {
     let raw = null;
     try {
-      raw = JSON.parse(localStorage.getItem(SAVE_KEY));
+      raw = JSON.parse(
+        localStorage.getItem(SAVE_KEY) ||
+          localStorage.getItem(OLD_SAVE_KEY) ||
+          "null",
+      );
     } catch (_error) {
       raw = null;
     }
     state.save = Core.normalizeSave(raw, DATA);
+    if (raw?.version === 1)
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state.save));
     applySettings();
     refreshTitle();
   }
@@ -114,18 +124,34 @@
     $("#motionToggle").checked = Boolean(state.save?.settings?.reducedMotion);
   }
 
+  function currentChapter() {
+    return (
+      DATA.campaign.chapters[state.save?.chapterIndex || 0] ||
+      DATA.campaign.chapters[0]
+    );
+  }
+
+  function campaignBattleIndex() {
+    const chapterIndex = Number(state.save?.chapterIndex || 0);
+    return (
+      DATA.campaign.chapters
+        .slice(0, chapterIndex)
+        .reduce((total, chapter) => total + chapter.encounters.length, 0) +
+      Number(state.save?.encounterIndex || 0)
+    );
+  }
+
   function refreshTitle() {
     const continueButton = $("#continueButton");
     continueButton.hidden = !hasSave();
     if (!continueButton.hidden) {
       const completed = state.save?.cleared;
-      const progress = Math.min(
-        5,
-        Number(state.save?.routeIndex || 0) + (completed ? 1 : 0),
-      );
+      const progress = completed
+        ? DATA.campaign.totalBattles
+        : campaignBattleIndex();
       $("#continueDetail").textContent = completed
-        ? "平安編クリア済み・記録を見る"
-        : `${progress}/5戦　歌のカケラ ${state.save?.totalShards || 0}`;
+        ? "全4章クリア済み・活動記録を見る"
+        : `${currentChapter().name}・${progress}/${DATA.campaign.totalBattles}戦　カケラ ${state.save?.totalShards || 0}`;
     }
   }
 
@@ -134,7 +160,7 @@
       screen.classList.toggle("active", screen.id === id),
     );
     state.currentScreen = id;
-    $("#screenLabel").textContent = label || DATA.chapter.name;
+    $("#screenLabel").textContent = label || currentChapter().name;
     window.scrollTo({
       top: 0,
       behavior: state.save?.settings?.reducedMotion ? "auto" : "smooth",
@@ -144,9 +170,10 @@
   function startNewGame() {
     state.save = Core.defaultSave(DATA);
     state.selected = [];
+    state.pendingChapter = null;
     persist();
     refreshTitle();
-    showScreen("prologueScreen", "序章　消えた百の歌");
+    showScreen("prologueScreen", "序章　放課後が止まった日");
     playSound("open");
   }
 
@@ -159,36 +186,34 @@
   }
 
   function currentEncounter() {
-    if (state.save.routeIndex >= DATA.chapter.normalBattlesPerRun)
-      return DATA.boss;
-    const id = state.save.route[state.save.routeIndex];
-    return (
-      DATA.monsters.find((monster) => monster.id === id) || DATA.monsters[0]
-    );
+    const chapter = currentChapter();
+    const id = chapter.encounters[state.save.encounterIndex];
+    return [...DATA.monsters, DATA.boss].find((enemy) => enemy.id === id);
   }
 
   function renderField() {
-    showScreen("fieldScreen", DATA.chapter.name);
-    const index = state.save.routeIndex;
+    const chapter = currentChapter();
+    showScreen("fieldScreen", chapter.name);
+    const index = state.save.encounterIndex;
     const encounter = currentEncounter();
+    $("#fieldTitle").textContent = chapter.subtitle;
     $("#fieldShards").textContent = state.save.totalShards || 0;
     $("#fieldStep").textContent =
-      index >= 4 ? "終幕" : `${["一", "二", "三", "四"][index] || "四"}夜目`;
-    $("#nextEncounterName").textContent =
-      index >= 4 ? "望月殿へ" : encounter.place;
+      `${chapter.name}・${index + 1} / ${chapter.encounters.length}`;
+    $("#nextEncounterName").textContent = encounter.place;
     $("#fieldMessage").textContent =
-      index >= 4
-        ? "四つの封印が解けた。満月の御殿で、歌を奪った者が待つ。"
-        : encounter.intro;
-    $("#encounterButton").textContent =
-      index >= 4 ? "望月殿へ入る" : "歌の気配を追う";
+      index === 0 ? chapter.intro : encounter.intro;
+    $("#encounterButton").textContent = enemyActionLabel(encounter);
+    const fieldMap = $("#fieldMap");
+    fieldMap.style.setProperty(
+      "--chapter-background",
+      `url("${chapter.background}")`,
+    );
+    fieldMap.dataset.chapter = chapter.id;
 
-    const nodes = [
-      ...state.save.route.map((id) =>
-        DATA.monsters.find((monster) => monster.id === id),
-      ),
-      DATA.boss,
-    ];
+    const nodes = chapter.encounters.map((id) =>
+      [...DATA.monsters, DATA.boss].find((enemy) => enemy.id === id),
+    );
     $("#routeNodes").innerHTML = nodes
       .map((monster, nodeIndex) => {
         const status =
@@ -197,15 +222,40 @@
             : nodeIndex === index
               ? "current"
               : "locked";
-        const mark = nodeIndex < index ? "✓" : nodeIndex === 4 ? "月" : "異";
+        const mark =
+          nodeIndex < index
+            ? "✓"
+            : monster?.boss
+              ? "月"
+              : monster?.chapterBoss
+                ? "封"
+                : "異";
         return `<li class="route-node ${status}" aria-label="${escapeHtml(monster?.name || "怪異")} ${status}">${mark}</li>`;
+      })
+      .join("");
+    $("#schoolFloors").innerHTML = DATA.campaign.chapters
+      .map((floor, floorIndex) => {
+        const complete = state.save.completedChapters.includes(floor.id);
+        const active = floorIndex === state.save.chapterIndex;
+        const status = complete ? "done" : active ? "current" : "locked";
+        return `<li class="school-floor ${status}" ${active ? 'aria-current="step"' : ""}><b>${escapeHtml(floor.label)}</b><span>${escapeHtml(floor.subtitle)}</span><i>${complete ? "✓" : active ? "●" : ""}</i></li>`;
       })
       .join("");
   }
 
+  function enemyActionLabel(enemy) {
+    if (enemy.boss) return "百首匣を開く";
+    if (enemy.chapterBoss) return "階の封印を破る";
+    return "怪異と対峙する";
+  }
+
   function startEncounter() {
     const enemy = currentEncounter();
-    const maxSealHp = enemy.boss ? 150 : 100;
+    const chapter = currentChapter();
+    const isBoss = enemy.boss || enemy.chapterBoss;
+    const maxSealHp = isBoss
+      ? chapter.difficulty.bossSealHp
+      : chapter.difficulty.sealHp;
     state.battle = {
       enemy,
       seals: enemy.sealPoems.map((poemNo) => ({
@@ -215,11 +265,14 @@
       })),
       busy: false,
       turn: 1,
+      counterDamage: isBoss
+        ? chapter.difficulty.bossCounter
+        : chapter.difficulty.counter,
     };
     state.selected = [];
     showScreen(
       "battleScreen",
-      enemy.boss ? "終幕　望月殿" : `${enemy.place}　怪異戦`,
+      enemy.boss ? "第四章　百首匣" : `${chapter.label}　${enemy.place}`,
     );
     $("#setupPanel").hidden = false;
     $("#fightPanel").hidden = true;
@@ -227,8 +280,13 @@
     renderSlots();
     $("#battleLog").innerHTML =
       `<b>${escapeHtml(enemy.intro)}</b><br>${escapeHtml(enemy.story)}<span class="enemy-threat"><i>危</i>${escapeHtml(enemy.threat)}</span>`;
-    playSound(enemy.boss ? "boss" : "encounter");
-    vibrate(enemy.boss ? [40, 50, 80] : [35, 45, 35]);
+    const stage = $("#enemyStage");
+    stage.style.setProperty(
+      "--chapter-background",
+      `url("${chapter.background}")`,
+    );
+    playSound(isBoss ? "boss" : "encounter");
+    vibrate(isBoss ? [40, 50, 80] : [35, 45, 35]);
   }
 
   function renderBattle() {
@@ -380,10 +438,18 @@
     vibrate(12);
     renderSlots();
     renderPicker();
+    if (state.selected.length === 5) {
+      setModal($("#pickerModal"), false);
+      renderLinks($("#readyLinks"), state.selected);
+      setModal($("#deckReadyModal"), true);
+      playSound("link");
+      vibrate([15, 25, 45]);
+    }
   }
 
   function bindDeck() {
     if (state.selected.length !== 5) return;
+    setModal($("#deckReadyModal"), false);
     $("#setupPanel").hidden = true;
     $("#fightPanel").hidden = false;
     $("#actionCards").innerHTML = state.selected
@@ -421,7 +487,9 @@
       selected: state.selected,
       shards: state.save.shards,
       links: DATA.links,
-      boss: state.battle.enemy.boss,
+      boss: state.battle.enemy.boss || state.battle.enemy.chapterBoss,
+      counterBase: state.battle.counterDamage,
+      guardBonus: state.save.guardBonus,
     });
     if (!outcome.exact && state.save.mp < outcome.mpCost) {
       $("#battleLog").innerHTML =
@@ -505,7 +573,10 @@
       "<b>息を整え、歌の流れを取り戻した。MP +25。</b>";
     playSound("recover");
     setTimeout(
-      () => enemyCounter(state.battle.enemy.boss ? 13 : 9),
+      () =>
+        enemyCounter(
+          Math.max(2, state.battle.counterDamage - state.save.guardBonus),
+        ),
       state.save.settings.reducedMotion ? 60 : 550,
     );
   }
@@ -530,9 +601,12 @@
 
   function finishBattle() {
     const enemy = state.battle.enemy;
+    const chapter = currentChapter();
+    const isChapterEnd =
+      state.save.encounterIndex === chapter.encounters.length - 1;
     const rewards = enemy.sealPoems.map((no) => {
       const before = Core.levelForShards(state.save.shards[no] || 0);
-      const gain = enemy.boss ? 4 : 3;
+      const gain = enemy.boss ? 5 : enemy.chapterBoss ? 4 : 3;
       state.save.shards[no] = (state.save.shards[no] || 0) + gain;
       state.save.totalShards += gain;
       const after = Core.levelForShards(state.save.shards[no]);
@@ -542,11 +616,29 @@
       state.save.defeated.push(enemy.id);
     state.save.hp = Math.min(state.save.maxHp, state.save.hp + 20);
     state.save.mp = Math.min(state.save.maxMp, state.save.mp + 30);
-    if (enemy.boss) state.save.cleared = true;
-    else {
-      state.save.routeIndex += 1;
-      if (state.save.routeIndex >= DATA.chapter.normalBattlesPerRun)
-        state.save.bossUnlocked = true;
+    state.pendingChapter = null;
+    if (isChapterEnd) {
+      if (!state.save.completedChapters.includes(chapter.id)) {
+        state.save.completedChapters.push(chapter.id);
+        if (chapter.id === "first_floor") {
+          state.save.maxHp += 10;
+        } else if (chapter.id === "second_floor") {
+          state.save.maxMp += 10;
+        } else if (chapter.id === "third_floor") {
+          state.save.guardBonus += 2;
+        }
+      }
+      if (enemy.boss) {
+        state.save.cleared = true;
+      } else {
+        state.pendingChapter = chapter;
+        state.save.chapterIndex += 1;
+        state.save.encounterIndex = 0;
+        state.save.hp = state.save.maxHp;
+        state.save.mp = state.save.maxMp;
+      }
+    } else {
+      state.save.encounterIndex += 1;
     }
     persist();
     showResult(enemy, rewards);
@@ -554,11 +646,15 @@
 
   function showResult(enemy, rewards) {
     $("#resultTitle").textContent = enemy.boss
-      ? "望月の影を破った！"
-      : "歌を取り戻した！";
+      ? "月の支配を破った！"
+      : enemy.chapterBoss
+        ? "この階の平穏を取り戻した！"
+        : "歌を取り戻した！";
     $("#resultSummary").textContent = enemy.boss
-      ? "奪われた歌が満月から解き放たれた。"
-      : `${enemy.name}を鎮め、三つの歌のカケラを取り戻した。`;
+      ? "百首と学校の記憶が、満月から解き放たれた。"
+      : enemy.chapterBoss
+        ? `${enemy.name}の封印がほどけ、校舎に日常の色が戻り始めた。`
+        : `${enemy.name}を鎮め、三つの歌のカケラを取り戻した。`;
     $("#rewardRows").innerHTML = rewards
       .map(
         (reward) => `<div class="reward-row">
@@ -569,8 +665,10 @@
       )
       .join("");
     $("#resultDoneButton").textContent = enemy.boss
-      ? "歌が帰る朝へ"
-      : "旅をつづける";
+      ? "いつもの朝へ"
+      : enemy.chapterBoss
+        ? "戻った学校を見る"
+        : "次の場所へ";
     setModal($("#resultModal"), true);
     playSound("victory");
     vibrate([30, 30, 70, 45, 100]);
@@ -579,11 +677,25 @@
   function finishResult() {
     setModal($("#resultModal"), false);
     if (state.save.cleared) renderVictory();
+    else if (state.pendingChapter)
+      renderChapterTransition(state.pendingChapter);
     else renderField();
   }
 
+  function renderChapterTransition(chapter) {
+    showScreen("chapterScreen", `${chapter.name}　完`);
+    $("#chapterStoryEyebrow").textContent = `${chapter.label} RESTORED`;
+    $("#chapterStoryTitle").textContent = chapter.clearTitle;
+    $("#chapterStoryText").textContent = chapter.clearText;
+    $("#chapterContinueButton").textContent = chapter.nextLabel;
+    $("#chapterScreen").style.setProperty(
+      "--chapter-background",
+      `url("${chapter.background}")`,
+    );
+  }
+
   function renderVictory() {
-    showScreen("victoryScreen", "第一章　平安編　完");
+    showScreen("victoryScreen", "第四章　学校編　完");
     const leveled = Object.values(state.save.shards).filter(
       (shards) => Core.levelForShards(shards) > 1,
     ).length;
@@ -596,7 +708,9 @@
   function openCollection() {
     const save = state.save || Core.defaultSave(DATA, 7261);
     $("#archiveShards").textContent = save.totalShards || 0;
-    $("#archiveMonsters").textContent = `${save.defeated?.length || 0} / 11`;
+    const allEnemies = [...DATA.monsters, DATA.boss];
+    $("#archiveMonsters").textContent =
+      `${save.defeated?.length || 0} / ${allEnemies.length}`;
     const grown = Object.entries(save.shards || {})
       .map(([no, shards]) => ({ no: Number(no), shards: Number(shards) }))
       .filter((entry) => entry.shards > 0)
@@ -604,14 +718,13 @@
     $("#cardArchive").innerHTML = grown.length
       ? grown.map((entry) => cardMarkup(entry.no)).join("")
       : '<div class="archive-empty">怪異を倒すと、取り戻した歌珠がここに並びます。</div>';
-    const allEnemies = [...DATA.monsters, DATA.boss];
     $("#monsterArchive").innerHTML = allEnemies
       .map((enemy) => {
         const known = save.defeated?.includes(enemy.id);
         const portrait = known
           ? `<span class="archive-art"><img src="${Art.monsterImage(enemy)}" alt="" loading="lazy" decoding="async"></span>`
           : '<span class="sigil">？</span>';
-        return `<div class="archive-monster ${known ? "" : "locked"}">${portrait}<div><b>${known ? escapeHtml(enemy.name) : "未遭遇の怪異"}</b><small>${known ? escapeHtml(enemy.epithet) : "月影の道に潜んでいる"}</small></div><span>${known ? "討伐済" : "未記録"}</span></div>`;
+        return `<div class="archive-monster ${known ? "" : "locked"}">${portrait}<div><b>${known ? escapeHtml(enemy.name) : "未遭遇の校怪"}</b><small>${known ? escapeHtml(enemy.place) : "校舎のどこかに潜んでいる"}</small></div><span>${known ? "解放済" : "未記録"}</span></div>`;
       })
       .join("");
     setModal($("#collectionModal"), true);
@@ -724,9 +837,18 @@
     $("#newGameButton").addEventListener("click", startNewGame);
     $("#continueButton").addEventListener("click", continueGame);
     $("#startJourneyButton").addEventListener("click", renderField);
+    $("#chapterContinueButton").addEventListener("click", () => {
+      state.pendingChapter = null;
+      renderField();
+    });
     $("#encounterButton").addEventListener("click", startEncounter);
     $("#openPickerButton").addEventListener("click", openPicker);
     $("#bindButton").addEventListener("click", bindDeck);
+    $("#readyBattleButton").addEventListener("click", bindDeck);
+    $("#readyEditButton").addEventListener("click", () => {
+      setModal($("#deckReadyModal"), false);
+      openPicker();
+    });
     $("#recoverButton").addEventListener("click", recover);
     $("#resultDoneButton").addEventListener("click", finishResult);
     $("#collectionButton").addEventListener("click", openCollection);
@@ -769,15 +891,25 @@
       persist();
     });
     $("#resetButton").addEventListener("click", () => {
-      if (!window.confirm("平安編のセーブデータを消して、最初から始めますか？"))
+      if (
+        !window.confirm(
+          "学校編のセーブデータと歌珠の成長を消して、最初から始めますか？",
+        )
+      )
         return;
       localStorage.removeItem(SAVE_KEY);
+      localStorage.removeItem(OLD_SAVE_KEY);
       state.save = Core.defaultSave(DATA, 7261);
       setModal($("#settingsModal"), false);
       refreshTitle();
-      showScreen("titleScreen", DATA.chapter.name);
+      showScreen("titleScreen", "花守小学校");
     });
-    ["pickerModal", "collectionModal", "settingsModal"].forEach((id) => {
+    [
+      "pickerModal",
+      "collectionModal",
+      "settingsModal",
+      "deckReadyModal",
+    ].forEach((id) => {
       const modal = $("#" + id);
       modal.addEventListener("click", (event) => {
         if (event.target === modal) setModal(modal, false);
@@ -804,7 +936,7 @@
     bindEvents();
     loadSave();
     validateData();
-    showScreen("titleScreen", DATA.chapter.name);
+    showScreen("titleScreen", "花守小学校");
   }
 
   init();

@@ -169,11 +169,12 @@
       archetype: "fox",
       palette: ["#d9d6ce", "#7f756c", "#d24a36"],
       sealPoems: [17, 5, 87],
-      place: "すすき野",
+      place: "1F・中央階段",
+      chapterBoss: true,
       story:
-        "歌人の記憶を喰らい、白い尾へ変えてきた。三つの尾に決まり字が灯る。",
-      intro: "草むらの奥で、三本の尾が月を隠した。",
-      threat: "夜明けまでに、すすき野から『大切な人を呼ぶ歌』が消えてしまう。",
+        "全校の鍵と名札を三本の尾へ結び、『何もさせなければ安全』という歪んだ守りで階段を閉ざす。",
+      intro: "止まったチャイムの下で、白い三尾が中央階段を塞いだ。",
+      threat: "鍵を奪われれば、みんなは名前のない放課後から出られなくなる。",
     },
     {
       id: "sumikurai",
@@ -184,11 +185,12 @@
       archetype: "ink",
       palette: ["#171924", "#526078", "#cf4d3c"],
       sealPoems: [32, 75, 18],
-      place: "破れ文庫",
+      place: "1F・昇降口",
       story:
-        "料紙から文字だけを吸い上げる。腹の奥では、奪われた歌が黒く渦巻く。",
-      intro: "墨の染みが床を這い、ゆっくりと顔をつくった。",
-      threat: "夜明けまでに、文庫に残る歌人の名がすべて白紙になる。",
+        "掲示板から文字を吸い、黒板消しの粉と墨をまとった校怪。名札の文字が腹の奥で渦巻く。",
+      intro: "靴箱の名札が白くなる。床を這う墨が、ゆっくり顔をつくった。",
+      threat:
+        "名札がすべて白紙になれば、友だちも先生も互いの名前を思い出せない。",
     },
     {
       id: "tsukibami",
@@ -199,11 +201,12 @@
       archetype: "crow",
       palette: ["#151a2a", "#67759a", "#e0b75b"],
       sealPoems: [57, 30, 36],
-      place: "月見の丘",
+      place: "3F・屋上階段",
+      chapterBoss: true,
       story:
-        "月を詠んだ歌を憎み、光の言葉を一字ずつ啄む。羽ばたくたび夜が深くなる。",
-      intro: "欠けた月を背に、巨大な翼が音もなく開いた。",
-      threat: "月を喰い切れば、月を詠んだ十三首は二度と読めなくなる。",
+        "校内の時計を月輪へ変え、歌と部員の声を一字ずつ啄む。翼が窓を覆うたび夜が深くなる。",
+      intro: "止まった大時計を背に、廊下いっぱいの黒い翼が開いた。",
+      threat: "月を喰い切れば、学校はチャイムの鳴らない永遠の夜へ沈む。",
     },
     {
       id: "tomoshibigumo",
@@ -214,10 +217,11 @@
       archetype: "spider",
       palette: ["#2b1720", "#864434", "#efb45e"],
       sealPoems: [69, 54, 51],
-      place: "古橋",
-      story: "消えた灯の数だけ脚を増やす。腹に浮かぶ三首が巣を支えている。",
-      intro: "灯籠の火が消える。暗闇に八つの眼だけが残った。",
-      threat: "三つの灯が消えれば、橋を渡る者の帰る記憶まで巣に絡め取られる。",
+      place: "1F・保健室",
+      story:
+        "白いカーテンと包帯を糸に変え、『休めば失敗しない』と校舎を眠りへ誘う。",
+      intro: "保健室の明かりが消え、カーテンの奥に八つの眼が灯った。",
+      threat: "眠りの糸が広がれば、かるた部も戦う理由を忘れてしまう。",
     },
     {
       id: "sakasawara",
@@ -228,11 +232,11 @@
       archetype: "child",
       palette: ["#c8b38e", "#473449", "#8e2f37"],
       sealPoems: [34, 12, 95],
-      place: "空寝殿",
+      place: "教員室・記録棚",
       story:
-        "誰にも読まれなくなった歌を、逆さ言葉で囁き続ける。振り向くと顔を奪われる。",
-      intro: "梁が軋む。頭上から小さな笑い声が降ってきた。",
-      threat: "声に振り向いた者は、顔と名前を歌から奪われる。",
+        "出席簿と学校写真を逆さに綴じ、記録に残らなかった努力を『なかった昨日』へ変える。",
+      intro: "出席簿が天井へ舞い、頭上から逆さの笑い声が降ってきた。",
+      threat: "昨日が消えれば、これまで取り戻した歌も仲間との記憶も失われる。",
     },
     {
       id: "mizukagami",
@@ -243,11 +247,11 @@
       archetype: "serpent",
       palette: ["#32545b", "#79a3a5", "#d8c274"],
       sealPoems: [61, 77, 46],
-      place: "鏡川",
+      place: "3F・理科室",
       story:
-        "水面に映った未練を餌にする。鱗の一枚ごとに、忘れられた下の句が眠る。",
-      intro: "川面の月が二つに割れ、青い巨体が鎌首をもたげた。",
-      threat: "鏡川が曇り切れば、都の人々は愛した者の面影を失う。",
+        "実験台の水滴とレンズから現れ、鱗へ順位や点数を映して比べる心をゆがめる。",
+      intro: "流し台の水面にもう一つの学校が映り、青い巨体が鎌首をもたげた。",
+      threat: "鏡が曇り切れば、部員は仲間の長所だけを見て自分の良さを忘れる。",
     },
     {
       id: "momijioni",
@@ -258,11 +262,13 @@
       archetype: "oni",
       palette: ["#7a2626", "#b64b32", "#e1a95b"],
       sealPoems: [24, 26, 70],
-      place: "龍田の坂",
+      place: "2F・放送室",
+      chapterBoss: true,
       story:
-        "美しい秋の歌だけを集め、鎧として纏う。怒りが満ちると山全体が紅に染まる。",
-      intro: "紅葉の渦が割れ、金棒を引きずる音が近づいた。",
-      threat: "鎧が完成すれば、龍田の紅葉と秋の歌は美しいまま永遠に死ぬ。",
+        "部活ポスターと夕日の朱を鎧にし、『勝者の声だけが本当』という噂を校内放送へ流す。",
+      intro: "スピーカーが偽の上の句を告げ、紅葉の渦から剛鬼が現れた。",
+      threat:
+        "噂が歌を塗り替えれば、仲間の声も正解の決まり字も信じられなくなる。",
     },
     {
       id: "nemurijika",
@@ -273,11 +279,11 @@
       archetype: "deer",
       palette: ["#574536", "#b69a72", "#e0c66f"],
       sealPoems: [10, 21, 33],
-      place: "鹿鳴の庭",
+      place: "3F・図書室",
       story:
-        "人の夢から懐かしい歌を盗む。角に吊られた鈴が鳴ると、記憶がひとつ消える。",
-      intro: "霧の向こうで鈴が鳴り、黄金の角が夜を裂いた。",
-      threat: "次の鈴が鳴れば、眠る子どもたちは家族の声を思い出せない。",
+        "本のしおりを角へ吊り、口に出せなかった夢や途中で諦めた願いを静かに食べる。",
+      intro: "本棚の間に霧が満ち、金の角の鈴がひとつ鳴った。",
+      threat: "次の鈴が鳴れば、部員は『もっと強くなりたい』という夢を忘れる。",
     },
     {
       id: "ayanukiga",
@@ -288,10 +294,11 @@
       archetype: "moth",
       palette: ["#665071", "#b48a9e", "#e7c978"],
       sealPoems: [9, 19, 89],
-      place: "装束蔵",
-      story: "重ねの色目を翅へ写し取る。舞う鱗粉は歌の順序を狂わせる。",
-      intro: "裂けた綾絹が宙へ浮き、巨大な翅へと姿を変えた。",
-      threat: "十二の翅が揃えば歌の順序がほどけ、百首は意味を失う。",
+      place: "2F・図書室",
+      story:
+        "本の頁と教室のカーテンを翅へ写し、物語の最後の一行だけを食べてしまう。",
+      intro: "頁が宙へ浮き、最後の言葉を欠いた巨大な翅へ姿を変えた。",
+      threat: "綴じ目がほどければ、本も校則も百首も結びの言葉を失う。",
     },
     {
       id: "kanesemukade",
@@ -302,11 +309,11 @@
       archetype: "centipede",
       palette: ["#3c3028", "#907052", "#d69a45"],
       sealPoems: [73, 98, 66],
-      place: "時鐘楼",
+      place: "教員室・大時計",
       story:
-        "古鐘を背負い、鳴るたび一首を過去へ葬る。硬い節の隙間に三枚の封印が見える。",
-      intro: "地の底で鐘が鳴る。無数の脚が石畳を叩き始めた。",
-      threat: "鐘が百度鳴れば、百首は生まれる前の時へ葬られる。",
+        "壁時計、電話線、鍵束を鉄の節足へ変え、鐘が鳴るたび学校の一日を記録から葬る。",
+      intro: "すべての時計が逆回転し、無数の脚が教員室の床を叩き始めた。",
+      threat: "鐘が百度鳴れば、学校の百年と百首は始まる前の時へ戻される。",
     },
   ];
 
@@ -320,24 +327,105 @@
     archetype: "boss",
     palette: ["#2d203a", "#8f6e9e", "#e5c15f"],
     sealPoems: [7, 57, 81],
-    place: "望月殿",
+    place: "教員室・百首匣",
     story:
-      "栄華を極めながら百首に名を刻まれなかった男。歌の記憶を奪い、永遠の満月に自らの名を残そうとする。",
-    intro: "御簾が上がる。満月を背負った男が、静かにこちらを見下ろした。",
-    threat: "望月が満ち切れば、百首すべてが道長ただ一人の歌へ書き換わる。",
+      "百首に選ばれなかった声を受け止める白紙へ、道長の残響が宿った。学校の記録を御簾に変え、自分だけの歌を残そうとする。",
+    intro: "百首匣が開く。満月を背負った男が、静かにかるた部を見下ろした。",
+    threat:
+      "望月が満ち切れば、百首も学校の記憶も道長ただ一人の歌へ書き換わる。",
   };
 
+  const chapters = [
+    {
+      id: "first_floor",
+      order: 1,
+      name: "第一章　一階",
+      label: "1F",
+      subtitle: "放課後が消えた日",
+      background: "assets/school/chapter-1-first-floor.webp",
+      encounters: ["sumikurai", "tomoshibigumo", "hakumen"],
+      intro:
+        "昇降口から名前が消え、終業チャイムは途中で止まった。怖くても、一人では行かない。五枚を手に最初の階段を目指す。",
+      clearTitle: "一階に名前とチャイムが戻った",
+      clearText:
+        "白狐が残した鍵には、藤波先生の名札が結ばれていた。先生は百首匣を開けたのではなく、封じようとしているのかもしれない。二階の放送室から、先生によく似た声が聞こえる。",
+      nextLabel: "二階の声を確かめる",
+      difficulty: { sealHp: 75, bossSealHp: 95, counter: 6, bossCounter: 8 },
+    },
+    {
+      id: "second_floor",
+      order: 2,
+      name: "第二章　二階",
+      label: "2F",
+      subtitle: "うわさは歌を塗り替える",
+      background: "assets/school/chapter-2-second-floor.webp",
+      encounters: ["sakasawara", "ayanukiga", "momijioni"],
+      intro:
+        "本の結末が消え、スピーカーは『先生が匣を開けた』と繰り返す。確かめるまで決めつけず、自分たちが聞いた声を信じて進む。",
+      clearTitle: "二階に本と本当の声が戻った",
+      clearText:
+        "放送機に藤波先生の録音が残っていた。『私は開けていない。白紙に満月が現れたの』。録音の最後、三階のかるた室から札を払う音が響く。",
+      nextLabel: "三階の札音を追う",
+      difficulty: { sealHp: 90, bossSealHp: 110, counter: 8, bossCounter: 10 },
+    },
+    {
+      id: "third_floor",
+      order: 3,
+      name: "第三章　三階",
+      label: "3F",
+      subtitle: "勝ちたい心の影",
+      background: "assets/school/chapter-3-third-floor.webp",
+      encounters: ["nemurijika", "mizukagami", "tsukibami"],
+      intro:
+        "図書室の夢、理科室の鏡、止まった大時計。『負けたら価値がない』という影に、かるた部は仲間と勝ちたい本当の気持ちを重ねる。",
+      clearTitle: "三階に夢と部室の灯りが戻った",
+      clearText:
+        "鴉が落とした匣の破片には『この世をば』と満月の紋。百人一首には選ばれなかった藤原道長の歌だ。紅い札の道が、事件の中心である教員室へ伸びる。",
+      nextLabel: "教員室で月の主と向き合う",
+      difficulty: {
+        sealHp: 105,
+        bossSealHp: 130,
+        counter: 10,
+        bossCounter: 12,
+      },
+    },
+    {
+      id: "staff_room",
+      order: 4,
+      name: "第四章　教員室",
+      label: "職員室",
+      subtitle: "百首に選ばれなかった月",
+      background: "assets/school/chapter-4-staff-room.webp",
+      encounters: ["kanesemukade", "michinaga"],
+      intro:
+        "教員室は平安の政庁と重なり、出席簿も校史も白紙へ変わり始めた。選ばれなかったことと、価値がないことは同じではない。その答えを五枚へ託す。",
+      clearTitle: "花守小学校に、いつもの朝が帰った",
+      clearText:
+        "満月がほどけ、百枚の札が春の花びらのように机へ降りた。名札、チャイム、本をめくる音、笑い声が戻る。選ばれた歌も選ばれなかった歌も、誰かが声にするたび生まれ直す。",
+      nextLabel: "エンディングへ",
+      difficulty: {
+        sealHp: 125,
+        bossSealHp: 150,
+        counter: 12,
+        bossCounter: 14,
+      },
+    },
+  ];
+
   global.HYAKUSHU_IBUN_DATA = {
-    version: 1,
+    version: 2,
     links,
     decisionKeys,
     monsters,
     boss,
-    chapter: {
-      id: "heian",
-      name: "第一章　平安編",
-      subtitle: "望月に喰われた歌",
-      normalBattlesPerRun: 4,
+    campaign: {
+      id: "hanamori_school",
+      title: "百首異聞　放課後かるた部と月影の学校",
+      totalBattles: chapters.reduce(
+        (total, chapter) => total + chapter.encounters.length,
+        0,
+      ),
+      chapters,
     },
   };
 })(typeof window !== "undefined" ? window : globalThis);

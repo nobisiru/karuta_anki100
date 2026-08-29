@@ -6,13 +6,13 @@
       name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
     />
-    <meta name="theme-color" content="#27315f" />
+    <meta name="theme-color" content="#283465" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>百首異聞｜第一章 平安編</title>
+    <title>百首異聞｜放課後かるた部と月影の学校</title>
     <link rel="stylesheet" href="hyakushu-ibun.css" />
   </head>
   <body>
-    <div id="app" class="game-shell youthful-theme">
+    <div id="app" class="game-shell youthful-theme school-campaign">
       <div class="ambient" aria-hidden="true">
         <i></i><i></i><i></i><i></i><i></i>
       </div>
@@ -28,7 +28,7 @@
         </button>
         <div class="header-title">
           <span id="chapterLabel">百首異聞</span>
-          <b id="screenLabel">第一章　平安編</b>
+          <b id="screenLabel">花守小学校</b>
         </div>
         <button
           id="settingsButton"
@@ -46,10 +46,13 @@
           class="screen active"
           aria-labelledby="gameTitle"
         >
-          <div class="title-visual" aria-hidden="true">
-            <div class="title-orbit"></div>
-            <div class="title-moon"></div>
-            <div class="title-gate"></div>
+          <div class="title-visual school-title-visual" aria-hidden="true">
+            <img
+              class="title-school-art"
+              src="assets/school/title-karuta-club.webp"
+              alt=""
+              decoding="async"
+            />
             <div class="title-seal seal-a">む</div>
             <div class="title-seal seal-b">ちは</div>
             <div class="title-seal seal-c">おく</div>
@@ -58,13 +61,13 @@
             </div>
           </div>
           <div class="title-copy">
-            <span class="eyebrow">UTA × ADVENTURE</span>
+            <span class="eyebrow">AFTER SCHOOL KARUTA CLUB</span>
             <h1 id="gameTitle">百首異聞</h1>
-            <p>歌がつなぐ、月夜の約束</p>
+            <p>放課後かるた部と、消えた百の歌</p>
           </div>
           <div class="title-actions">
             <div class="title-promise">
-              決まり字を見つけて、百首の輝きを取り戻そう。
+              五枚の札と仲間の声で、いつもの学校を取り戻そう。
             </div>
             <button
               id="continueButton"
@@ -72,20 +75,20 @@
               type="button"
               hidden
             >
-              <span>旅をつづける</span><small id="continueDetail"></small>
+              <span>つづきから</span><small id="continueDetail"></small>
             </button>
             <button
               id="newGameButton"
               class="primary-button gold"
               type="button"
             >
-              新しい物語
+              学校編をはじめる
             </button>
             <button id="collectionButton" class="text-button" type="button">
-              歌珠と怪異の記録
+              かるた部の活動記録
             </button>
           </div>
-          <p class="version-note">第一章・平安編　プレイ時間10〜15分</p>
+          <p class="version-note">全4章・11戦　プレイ時間30〜40分</p>
         </section>
 
         <section
@@ -94,27 +97,55 @@
           aria-labelledby="prologueTitle"
         >
           <div class="story-paper">
-            <span class="eyebrow dark">STORY 01</span>
-            <h2 id="prologueTitle">消えた百の歌</h2>
+            <span class="eyebrow dark">CLUB LOG 00</span>
+            <h2 id="prologueTitle">放課後が止まった日</h2>
             <p>
-              満月の夜、百人一首の歌が、人々の記憶から少しずつ消えはじめた。
+              市立花守小学校。いつもの放課後、かるた部には札を払う音が響いていた。
             </p>
             <p>
-              平安の夜へ迷い込んだあなたの手元に残ったのは、いつも覚えていた緑のふちの取り札だけ。
+              顧問の藤波先生が教員室から戻らないまま、校内放送が百人一首にはない「この世をば」を読み、昼にはない満月が窓に浮かぶ。
             </p>
             <p>
-              決まり字と下の句を結べば、札は「歌珠」となって怪異を鎮める力になる。
+              百首匣から飛び出した札は校内へ散り、名札の文字とチャイムの音を奪った。動けるのは、札へ何度も声を重ねてきたかるた部だけ。
             </p>
-            <blockquote>「百の歌など、月の影に沈めてしまえ――」</blockquote>
+            <blockquote>
+              すず「怖いって言っていい。でも、一人では行かない」
+            </blockquote>
             <p>
-              奪われた歌のカケラを取り戻し、望月殿へ。これは、歌を覚えてきたあなたにしか進めない物語。
+              すず、こよみ、まひる、そしてあなた。五枚の歌札で三つの決まり字封印を破り、平穏な学校生活を取り戻そう。
             </p>
             <button
               id="startJourneyButton"
               class="primary-button ink"
               type="button"
             >
-              旅をはじめる
+              五枚を手に取る
+            </button>
+          </div>
+        </section>
+
+        <section
+          id="chapterScreen"
+          class="screen story-screen chapter-story-screen"
+          aria-labelledby="chapterStoryTitle"
+        >
+          <div class="story-paper chapter-paper">
+            <span id="chapterStoryEyebrow" class="eyebrow dark"
+              >FLOOR RESTORED</span
+            >
+            <h2 id="chapterStoryTitle">一階の平穏が戻った</h2>
+            <p id="chapterStoryText"></p>
+            <div class="club-voices" aria-label="かるた部員">
+              <span><b>すず</b>部長・一音を信じる</span>
+              <span><b>こよみ</b>歌の物語を読む</span>
+              <span><b>まひる</b>五枚のつながりを見る</span>
+            </div>
+            <button
+              id="chapterContinueButton"
+              class="primary-button ink"
+              type="button"
+            >
+              次の階へ
             </button>
           </div>
         </section>
@@ -122,14 +153,14 @@
         <section id="fieldScreen" class="screen" aria-labelledby="fieldTitle">
           <div class="field-heading">
             <div>
-              <span class="eyebrow">MOONLIT JOURNEY</span>
-              <h2 id="fieldTitle">歌を取り戻す旅</h2>
+              <span class="eyebrow">HANAMORI SCHOOL MAP</span>
+              <h2 id="fieldTitle">校内を取り戻す</h2>
             </div>
             <div class="field-resource">
               <span>歌のカケラ</span><b id="fieldShards">0</b>
             </div>
           </div>
-          <div class="field-map" id="fieldMap">
+          <div class="field-map school-field-map" id="fieldMap">
             <div class="map-sky"></div>
             <div class="map-mountains"></div>
             <div class="map-river"></div>
@@ -137,19 +168,20 @@
             <div class="map-mist mist-one"></div>
             <div class="map-mist mist-two"></div>
             <ol id="routeNodes" class="route-nodes"></ol>
+            <ol id="schoolFloors" class="school-floors"></ol>
           </div>
           <div class="field-panel">
             <div>
-              <span id="fieldStep">一夜目</span>
+              <span id="fieldStep">第一章・1 / 3</span>
               <h3 id="nextEncounterName">怪異の気配</h3>
-              <p id="fieldMessage">月明かりを頼りに、歌のカケラを追う。</p>
+              <p id="fieldMessage">止まった放課後に、札の光を追う。</p>
             </div>
             <button
               id="encounterButton"
               class="primary-button compact"
               type="button"
             >
-              先へ進む
+              この場所へ向かう
             </button>
           </div>
         </section>
@@ -157,11 +189,11 @@
         <section id="battleScreen" class="screen" aria-labelledby="enemyName">
           <div class="battle-hud">
             <div class="meter-card hp-meter">
-              <div><span>HP</span><b id="hpText">120 / 120</b></div>
+              <div><span>体力 HP</span><b id="hpText">120 / 120</b></div>
               <div class="meter-track"><i id="hpBar"></i></div>
             </div>
             <div class="meter-card mp-meter">
-              <div><span>MP</span><b id="mpText">100 / 100</b></div>
+              <div><span>集中 MP</span><b id="mpText">100 / 100</b></div>
               <div class="meter-track"><i id="mpBar"></i></div>
             </div>
           </div>
@@ -253,10 +285,10 @@
           aria-labelledby="victoryTitle"
         >
           <div class="victory-emblem" aria-hidden="true"><span>百</span></div>
-          <span class="eyebrow">HEIAN STORY CLEAR</span>
-          <h2 id="victoryTitle">歌が帰る朝</h2>
+          <span class="eyebrow">SCHOOL LIFE RESTORED</span>
+          <h2 id="victoryTitle">いつもの朝が帰ってきた</h2>
           <p>
-            望月の影は消え、取り戻した歌が、朝の光とともに人々の心へ帰っていく。
+            名札、チャイム、本をめくる音、廊下の笑い声。百枚の札が机へ戻り、かるた部はまた最初の五枚を並べる。
           </p>
           <div class="victory-stats">
             <div><span>討伐</span><b id="victoryBattles">5</b></div>
@@ -289,7 +321,7 @@
         <div class="modal-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div>
-            <span class="eyebrow dark">UTA-DAMA</span>
+            <span class="eyebrow dark">TORIFUDA SELECT</span>
             <h2 id="pickerTitle">下の句札を選ぶ</h2>
           </div>
           <button
@@ -339,12 +371,12 @@
     >
       <div class="result-card">
         <div class="result-mark">結</div>
-        <span class="eyebrow dark">UTA RELEASED</span>
+        <span class="eyebrow dark">SCHOOL LIFE RESTORED</span>
         <h2 id="resultTitle">歌を取り戻した！</h2>
         <p id="resultSummary"></p>
         <div id="rewardRows" class="reward-rows"></div>
         <button id="resultDoneButton" class="primary-button ink" type="button">
-          月影の道へ戻る
+          次の場所へ
         </button>
       </div>
     </div>
@@ -362,7 +394,7 @@
         <div class="modal-header">
           <div>
             <span class="eyebrow dark">ARCHIVE</span>
-            <h2 id="collectionTitle">歌珠と怪異の記録</h2>
+            <h2 id="collectionTitle">かるた部の活動記録</h2>
           </div>
           <button
             id="closeCollectionButton"
@@ -418,7 +450,29 @@
           ><input id="motionToggle" type="checkbox"
         /></label>
         <button id="resetButton" class="danger-button" type="button">
-          平安編のセーブを消す
+          学校編のセーブを消す
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="deckReadyModal"
+      class="modal centered deck-ready-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="deckReadyTitle"
+      hidden
+    >
+      <div class="deck-ready-card">
+        <span class="eyebrow dark">FIVE CARDS READY</span>
+        <h2 id="deckReadyTitle">五枚がそろった！</h2>
+        <p>共鳴を確かめて、このまま決まり字バトルへ進めます。</p>
+        <div id="readyLinks" class="link-preview"></div>
+        <button id="readyBattleButton" class="primary-button" type="button">
+          バトルに進む
+        </button>
+        <button id="readyEditButton" class="text-button dark" type="button">
+          五枚を選び直す
         </button>
       </div>
     </div>

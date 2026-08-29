@@ -63,13 +63,18 @@ async function defeatCurrentEnemy() {
     ].find((button) => !button.disabled);
     click(next);
   }
-  click("#closePickerButton");
+  assert.equal($("#pickerModal").hidden, true, "5枚目で札選択が自動で閉じる");
+  assert.equal(
+    $("#deckReadyModal").hidden,
+    false,
+    "5枚目でバトル確認がポップアップする",
+  );
   assert.equal(
     $("#slots").querySelectorAll(".uta-card").length,
     5,
     "歌珠を5枚セットできる",
   );
-  click("#bindButton");
+  click("#readyBattleButton");
   for (const no of exactNos) {
     click(`[data-attack="${no}"]`);
     await wait(120);
@@ -98,11 +103,8 @@ async function defeatCurrentEnemy() {
     $("#fieldScreen").classList.contains("active"),
     "序章からフィールドへ進む",
   );
-  assert.equal(
-    $("#routeNodes").children.length,
-    5,
-    "通常4戦とボスの道が表示される",
-  );
+  assert.equal($("#routeNodes").children.length, 3, "一階の3戦が表示される");
+  assert.equal($("#schoolFloors").children.length, 4, "校内4章が表示される");
 
   click("#encounterButton");
   assert.ok($("#battleScreen").classList.contains("active"), "怪異戦へ進む");
@@ -113,31 +115,51 @@ async function defeatCurrentEnemy() {
     $("#fieldScreen").classList.contains("active"),
     "結果からフィールドへ戻る",
   );
-  const save = JSON.parse(window.localStorage.getItem("hyakushu_ibun_save_v1"));
-  assert.equal(save.routeIndex, 1, "1戦目の進行が保存される");
+  const save = JSON.parse(window.localStorage.getItem("hyakushu_ibun_save_v2"));
+  assert.equal(save.chapterIndex, 0, "1戦目は一階にいる");
+  assert.equal(save.encounterIndex, 1, "1戦目の進行が保存される");
   assert.equal(save.totalShards, 9, "歌のカケラが保存される");
 
-  for (let battle = 2; battle <= 5; battle += 1) {
+  for (let battle = 2; battle <= 11; battle += 1) {
     click("#encounterButton");
     await defeatCurrentEnemy();
     click("#resultDoneButton");
-    if (battle < 5)
+    if ([3, 6, 9].includes(battle)) {
+      assert.ok(
+        $("#chapterScreen").classList.contains("active"),
+        `${battle}戦目で章クリア物語へ進む`,
+      );
+      click("#chapterContinueButton");
       assert.ok(
         $("#fieldScreen").classList.contains("active"),
-        `${battle}戦目から道へ戻る`,
+        "章間物語から次の階へ進む",
       );
+    } else if (battle < 11) {
+      assert.ok(
+        $("#fieldScreen").classList.contains("active"),
+        `${battle}戦目から校内マップへ戻る`,
+      );
+    }
   }
 
   assert.ok(
     $("#victoryScreen").classList.contains("active"),
-    "ボス撃破後に平安編クリア画面へ進む",
+    "道長撃破後に学校編クリア画面へ進む",
   );
   const clearSave = JSON.parse(
-    window.localStorage.getItem("hyakushu_ibun_save_v1"),
+    window.localStorage.getItem("hyakushu_ibun_save_v2"),
   );
-  assert.equal(clearSave.cleared, true, "平安編クリアが保存される");
-  assert.equal(clearSave.defeated.length, 5, "4怪異とボスが討伐記録に残る");
-  assert.equal(clearSave.totalShards, 48, "全5戦のカケラが保存される");
+  assert.equal(clearSave.cleared, true, "学校編4章クリアが保存される");
+  assert.equal(clearSave.defeated.length, 11, "怪異10体と道長が記録に残る");
+  assert.equal(clearSave.totalShards, 114, "全11戦のカケラが保存される");
+  assert.deepEqual(
+    clearSave.completedChapters,
+    ["first_floor", "second_floor", "third_floor", "staff_room"],
+    "一階から教員室まで4章の完了を保存する",
+  );
+  assert.equal(clearSave.maxHp, 130, "一階報酬で最大HPが上がる");
+  assert.equal(clearSave.maxMp, 110, "二階報酬で最大MPが上がる");
+  assert.equal(clearSave.guardBonus, 2, "三階報酬で守りが上がる");
 
   console.log("百首異聞 DOM smoke test: OK");
   dom.window.close();

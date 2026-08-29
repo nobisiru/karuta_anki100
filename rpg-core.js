@@ -63,6 +63,8 @@
     shards,
     links,
     boss = false,
+    counterBase,
+    guardBonus = 0,
   }) {
     const exact = Number(cardNo) === Number(sealPoemNo);
     const level = levelForShards(shards?.[cardNo] || 0);
@@ -70,7 +72,12 @@
     const baseDamage = boss ? 21 : 25;
     const damage = exact ? 999 : baseDamage + level * 4 + modifiers.damageBonus;
     const mpCost = exact ? 0 : Math.max(8, 20 - modifiers.mpReduction);
-    const counterDamage = Math.max(2, (boss ? 13 : 9) - modifiers.guard);
+    const counterDamage = Math.max(
+      2,
+      finiteOr(counterBase, boss ? 13 : 9) -
+        modifiers.guard -
+        Math.max(0, finiteOr(guardBonus, 0)),
+    );
     return {
       exact,
       level,
@@ -100,43 +107,71 @@
   }
 
   function defaultSave(data, seed = Date.now()) {
+    void seed;
     return {
-      version: 1,
+      version: 2,
       updatedAt: new Date().toISOString(),
-      chapter: data.chapter.id,
-      route: seededRoute(data.monsters, data.chapter.normalBattlesPerRun, seed),
-      routeIndex: 0,
+      campaign: data.campaign.id,
+      chapterIndex: 0,
+      encounterIndex: 0,
+      completedChapters: [],
       defeated: [],
       hp: 120,
       maxHp: 120,
       mp: 100,
       maxMp: 100,
+      guardBonus: 0,
       shards: {},
       totalShards: 0,
-      bossUnlocked: false,
       cleared: false,
       playSeconds: 0,
       settings: { sound: true, haptics: true, reducedMotion: false },
+      legacy: null,
     };
   }
 
   function normalizeSave(raw, data) {
     const fresh = defaultSave(data, 7261);
-    if (!raw || typeof raw !== "object" || raw.version !== 1) return fresh;
-    const validIds = new Set(data.monsters.map((monster) => monster.id));
-    const route = Array.isArray(raw.route)
-      ? raw.route.filter((id) => validIds.has(id))
-      : [];
+    if (!raw || typeof raw !== "object") return fresh;
+    if (raw.version === 1) {
+      return {
+        ...fresh,
+        shards: raw.shards && typeof raw.shards === "object" ? raw.shards : {},
+        totalShards: Math.max(0, finiteOr(raw.totalShards, 0)),
+        defeated: Array.isArray(raw.defeated) ? raw.defeated : [],
+        playSeconds: Math.max(0, finiteOr(raw.playSeconds, 0)),
+        settings: { ...fresh.settings, ...(raw.settings || {}) },
+        legacy: {
+          migratedFromVersion: 1,
+          originalCleared: Boolean(raw.cleared),
+        },
+      };
+    }
+    if (raw.version !== 2) return fresh;
+    const chapters = data.campaign.chapters;
+    const chapterIndex = clamp(
+      finiteOr(raw.chapterIndex, 0),
+      0,
+      chapters.length - 1,
+    );
+    const encounterIndex = clamp(
+      finiteOr(raw.encounterIndex, 0),
+      0,
+      chapters[chapterIndex].encounters.length - 1,
+    );
+    const validIds = new Set(
+      [...data.monsters, data.boss].map((enemy) => enemy.id),
+    );
+    const validChapterIds = new Set(chapters.map((chapter) => chapter.id));
     return {
       ...fresh,
       ...raw,
-      route:
-        route.length === data.chapter.normalBattlesPerRun ? route : fresh.route,
-      routeIndex: clamp(
-        Number(raw.routeIndex) || 0,
-        0,
-        data.chapter.normalBattlesPerRun,
-      ),
+      campaign: data.campaign.id,
+      chapterIndex,
+      encounterIndex,
+      completedChapters: Array.isArray(raw.completedChapters)
+        ? raw.completedChapters.filter((id) => validChapterIds.has(id))
+        : [],
       hp: clamp(
         finiteOr(raw.hp, fresh.maxHp),
         0,
@@ -148,7 +183,11 @@
         finiteOr(raw.maxMp, fresh.maxMp),
       ),
       shards: raw.shards && typeof raw.shards === "object" ? raw.shards : {},
-      defeated: Array.isArray(raw.defeated) ? raw.defeated : [],
+      defeated: Array.isArray(raw.defeated)
+        ? raw.defeated.filter((id) => validIds.has(id))
+        : [],
+      guardBonus: Math.max(0, finiteOr(raw.guardBonus, 0)),
+      totalShards: Math.max(0, finiteOr(raw.totalShards, 0)),
       settings: { ...fresh.settings, ...(raw.settings || {}) },
     };
   }
