@@ -130,6 +130,9 @@ async function defeatCurrentEnemy(battleNumber) {
 
     if (!opponentChecked) {
       opponentChecked = true;
+      const takenPoemNo = Number(
+        $('#raceCards [data-race-correct="true"]').dataset.raceNo,
+      );
       const hpBefore = Number($("#hpText").textContent.split("/")[0]);
       await waitFor(
         () => /怪異が先に払った/.test($("#raceStatus").textContent),
@@ -149,7 +152,12 @@ async function defeatCurrentEnemy(battleNumber) {
         () =>
           !$("#raceCards").classList.contains("waiting") &&
           $("#raceStatus").textContent === "読み進行中",
-        "怪異に取られた一首を再挑戦できる",
+        "怪異に取られた後は次の問題へ進める",
+      );
+      assert.notEqual(
+        Number($('#raceCards [data-race-correct="true"]').dataset.raceNo),
+        takenPoemNo,
+        "怪異に取られた後は同じ札ではなく別の歌を読む",
       );
     }
 

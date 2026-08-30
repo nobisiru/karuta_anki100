@@ -669,9 +669,10 @@
     $("#raceStatus").textContent = "怪異が先に払った！";
     $("#raceStream").textContent = poem(correctNo).key;
     $("#raceHelp").textContent =
-      `${state.battle.profile.rank}の速さ・同じ一首へ再挑戦`;
+      `${state.battle.profile.rank}の速さ・次は違う歌`;
     $("#raceFeedback").innerHTML =
       `<b>${escapeHtml(state.battle.enemy.name)}が先取。</b> 決まり字は「${escapeHtml(poem(correctNo).key)}」。`;
+    replaceFailedPoem(correctNo);
     $("#effectLayer").innerHTML = '<i class="opponent-hand"></i>';
     const opponentHand = $(".opponent-hand", $("#effectLayer"));
     playSound("counter");
@@ -687,7 +688,7 @@
         () =>
           startRaceRound({
             retry: true,
-            message: "取られた一首は、その場でもう一度取り返せる。",
+            message: "取られた歌を外し、次の問題へ切り替えました。",
           }),
         state.save.settings.reducedMotion ? 80 : 1050,
       );
