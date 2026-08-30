@@ -61,6 +61,8 @@ async function waitFor(predicate, message, timeout = 800) {
 
 let mistakeChecked = false;
 let opponentChecked = false;
+let carryDamageChecked = false;
+let carriedHp = null;
 
 async function defeatCurrentEnemy(battleNumber) {
   assert.equal($("#sealLayer").children.length, 3, "三本勝負が表示される");
@@ -96,6 +98,10 @@ async function defeatCurrentEnemy(battleNumber) {
 
     if (!mistakeChecked) {
       mistakeChecked = true;
+      const failedPoemNo = Number(
+        cards.find((card) => card.dataset.raceCorrect === "true").dataset
+          .raceNo,
+      );
       const hpBefore = Number($("#hpText").textContent.split("/")[0]);
       click(cards.find((card) => card.dataset.raceCorrect === "false"));
       assert.match($("#raceStatus").textContent, /お手つき/, "誤札を判定する");
@@ -113,7 +119,12 @@ async function defeatCurrentEnemy(battleNumber) {
           !$("#raceCards").classList.contains("waiting") &&
           $("#raceCards").children.length === 6 &&
           $("#raceStatus").textContent === "読み進行中",
-        "同じ一首を6枚で再挑戦できる",
+        "別の一首を6枚で再挑戦できる",
+      );
+      assert.notEqual(
+        Number($('#raceCards [data-race-correct="true"]').dataset.raceNo),
+        failedPoemNo,
+        "お手つき後は同じ札ではなく別の歌を読む",
       );
     }
 
@@ -139,6 +150,29 @@ async function defeatCurrentEnemy(battleNumber) {
           !$("#raceCards").classList.contains("waiting") &&
           $("#raceStatus").textContent === "読み進行中",
         "怪異に取られた一首を再挑戦できる",
+      );
+    }
+
+    if (battleNumber === 4 && !carryDamageChecked) {
+      carryDamageChecked = true;
+      const failedPoemNo = Number(
+        $('#raceCards [data-race-correct="true"]').dataset.raceNo,
+      );
+      const wrong = [
+        ...$("#raceCards").querySelectorAll("[data-race-no]"),
+      ].find((card) => card.dataset.raceCorrect === "false");
+      click(wrong);
+      carriedHp = Number($("#hpText").textContent.split("/")[0]);
+      await waitFor(
+        () =>
+          !$("#raceCards").classList.contains("waiting") &&
+          $("#raceStatus").textContent === "読み進行中",
+        "二階でもお手つき後に次の問題へ進む",
+      );
+      assert.notEqual(
+        Number($('#raceCards [data-race-correct="true"]').dataset.raceNo),
+        failedPoemNo,
+        "二階でもお手つき後の歌を差し替える",
       );
     }
 
@@ -202,6 +236,15 @@ async function defeatCurrentEnemy(battleNumber) {
     }
 
     await defeatCurrentEnemy(battle);
+    if (battle === 1) {
+      const damageSave = JSON.parse(
+        window.localStorage.getItem("hyakushu_ibun_save_v2"),
+      );
+      assert.ok(
+        damageSave.hp < damageSave.maxHp,
+        "戦闘終了後も受けたダメージを自動回復しない",
+      );
+    }
     click("#resultDoneButton");
 
     if ([3, 6, 9].includes(battle)) {
@@ -234,6 +277,20 @@ async function defeatCurrentEnemy(battleNumber) {
           true,
           "HP回復イベントは一階クリア時だけ表示する",
         );
+        if (battle === 6) {
+          const secondFloorSave = JSON.parse(
+            window.localStorage.getItem("hyakushu_ibun_save_v2"),
+          );
+          assert.equal(
+            secondFloorSave.hp,
+            carriedHp,
+            "二階で受けたダメージを戦闘間・章間とも持ち越す",
+          );
+          assert.ok(
+            secondFloorSave.hp < secondFloorSave.maxHp,
+            "二階終了時に自動全回復しない",
+          );
+        }
       }
       click("#chapterContinueButton");
       assert.ok(
@@ -268,8 +325,8 @@ async function defeatCurrentEnemy(battleNumber) {
   assert.equal(clearSave.guardBonus, 2, "三階報酬で守りが上がる");
   assert.equal(
     readerCalls.length,
-    35,
-    "全33首とお手つき・怪異先取の再戦で音声を呼ぶ",
+    36,
+    "全33首と2回のお手つき・怪異先取で音声を呼ぶ",
   );
   assert.ok(readerCalls.every((no) => no >= 1 && no <= 100));
 

@@ -338,6 +338,8 @@
       playerTakes: 0,
       opponentTakes: 0,
       mistakes: 0,
+      currentSealIndex: null,
+      askedPoems: new Set(enemy.sealPoems),
     };
     showScreen(
       "battleScreen",
@@ -373,7 +375,12 @@
       { once: true },
     );
     $("#enemyStage").style.setProperty("--enemy-accent", enemy.palette[2]);
-    const current = seals.findIndex((seal) => seal.hp > 0);
+    const fallbackCurrent = seals.findIndex((seal) => seal.hp > 0);
+    const selectedCurrent = state.battle.currentSealIndex;
+    const current =
+      Number.isInteger(selectedCurrent) && seals[selectedCurrent]?.hp > 0
+        ? selectedCurrent
+        : fallbackCurrent;
     const marks = ["一", "二", "三"];
     $("#sealLayer").innerHTML = seals
       .map((seal, index) => {
@@ -446,6 +453,7 @@
     const profile = state.battle.profile;
     state.battle.phase = "preview";
     state.battle.currentPoemNo = target.poemNo;
+    state.battle.currentSealIndex = roundIndex;
 
     const choices = raceChoices(target.poemNo, profile);
     $("#raceCards").innerHTML = choices
@@ -453,8 +461,9 @@
       .join("");
     $("#raceCards").className = "race-cards waiting";
     $("#raceReader").className = "race-reader previewing";
+    const cleared = state.battle.seals.filter((seal) => seal.hp <= 0).length;
     $("#raceProgress").textContent =
-      `${["一", "二", "三"][roundIndex]}首目 / 三首`;
+      `${["一", "二", "三"][cleared]}首目 / 三首`;
     $("#raceStatus").textContent = options.retry
       ? "もう一度、六枚を見直そう"
       : "まず六枚の位置を見よう";
@@ -557,6 +566,32 @@
     });
   }
 
+  function replaceFailedPoem(failedPoemNo) {
+    const target = state.battle.seals.find(
+      (seal) => seal.poemNo === failedPoemNo && seal.hp > 0,
+    );
+    if (!target) return failedPoemNo;
+    const activePoems = new Set(
+      state.battle.seals
+        .filter((seal) => seal.hp > 0)
+        .map((seal) => seal.poemNo),
+    );
+    let candidates = window.ALL_LOWER.map((_item, index) => index + 1).filter(
+      (no) =>
+        no !== failedPoemNo &&
+        !activePoems.has(no) &&
+        !state.battle.askedPoems.has(no),
+    );
+    if (!candidates.length)
+      candidates = window.ALL_LOWER.map((_item, index) => index + 1).filter(
+        (no) => no !== failedPoemNo && !activePoems.has(no),
+      );
+    const replacement = shuffle(candidates)[0] || failedPoemNo;
+    target.poemNo = replacement;
+    state.battle.askedPoems.add(replacement);
+    return replacement;
+  }
+
   function takeRaceCard(no, button) {
     if (!state.battle || state.battle.phase !== "reading") return;
     const correctNo = state.battle.currentPoemNo;
@@ -593,13 +628,14 @@
     }
 
     state.battle.mistakes += 1;
+    replaceFailedPoem(correctNo);
     button.classList.add("wrong");
     const correctButton = $('[data-race-correct="true"]', $("#raceCards"));
     correctButton?.classList.add("missed");
     $("#raceReader").className = "race-reader lost";
     $("#raceStatus").textContent = "お手つき！";
     $("#raceStream").textContent = "待";
-    $("#raceHelp").textContent = "同じ一首へ、もう一度挑戦";
+    $("#raceHelp").textContent = "次は違う歌を読みます";
     $("#raceFeedback").innerHTML =
       `<b>その札ではない。</b> 正解は「${escapeHtml(poem(correctNo).lower)}」。`;
     playSound("error");
@@ -609,7 +645,7 @@
         () =>
           startRaceRound({
             retry: true,
-            message: "深呼吸。今度は決まり字まで聞いて取ろう。",
+            message: "問題を入れ替えました。新しい読みへ集中しよう。",
           }),
         state.save.settings.reducedMotion ? 80 : 1050,
       );
@@ -730,7 +766,7 @@
     const hpAtVictory = Math.round(state.save.hp);
     const isChapterEnd =
       state.save.encounterIndex === chapter.encounters.length - 1;
-    const rewards = enemy.sealPoems.map((no) => {
+    const rewards = state.battle.seals.map(({ poemNo: no }) => {
       const before = Core.levelForShards(state.save.shards[no] || 0);
       const gain = enemy.boss ? 5 : enemy.chapterBoss ? 4 : 3;
       state.save.shards[no] = (state.save.shards[no] || 0) + gain;
@@ -740,7 +776,6 @@
     });
     if (!state.save.defeated.includes(enemy.id))
       state.save.defeated.push(enemy.id);
-    state.save.hp = Math.min(state.save.maxHp, state.save.hp + 20);
     state.save.mp = Math.min(state.save.maxMp, state.save.mp + 30);
     state.pendingChapter = null;
     state.pendingRecovery = null;
@@ -761,9 +796,9 @@
         state.pendingChapter = chapter;
         state.save.chapterIndex += 1;
         state.save.encounterIndex = 0;
-        state.save.hp = state.save.maxHp;
         state.save.mp = state.save.maxMp;
         if (chapter.recoveryEvent) {
+          state.save.hp = state.save.maxHp;
           state.pendingRecovery = {
             before: hpAtVictory,
             after: state.save.maxHp,
