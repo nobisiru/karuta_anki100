@@ -457,6 +457,119 @@
     { rank: "名人級", charMs: 320, cpuMs: 1200, similarity: 2 },
   ];
 
+  const specialMatches = [
+    {
+      id: "michinaga_duel",
+      buttonLabel: "藤原道長と対戦",
+      buttonNote: "名人級・月影の三本勝負",
+      label: "月影再戦",
+      background: "assets/school/chapter-4-staff-room.webp",
+      counterDamage: 14,
+      result:
+        "満月の残響を三首で退けた。道長は扇を閉じ、次の勝負を待っている。",
+      opponent: {
+        ...boss,
+        id: "michinaga_duel",
+        imageId: "michinaga",
+        name: "藤原道長",
+        place: "放課後特別対戦・月影の間",
+        epithet: "満月を背負う、選ばれなかった歌人",
+        intro: "校長から離れた満月の残響が、今度は一人の歌人として扇を開く。",
+        threat: "名人級の速さを越え、三首すべてを先に結んで勝負を終えよう。",
+        specialOpponent: true,
+        rivalCall: "藤原道長",
+      },
+      profile: {
+        rank: "道長・名人級",
+        charMs: 320,
+        cpuMs: 1200,
+        similarity: 2,
+        level: 11,
+        keyDelayFactor: 1,
+        jitterMin: 0.88,
+        jitterMax: 1.12,
+        styleNote: "満月のように重く、正攻法で札を払う",
+      },
+    },
+    {
+      id: "master_suoh",
+      buttonLabel: "名人へ挑戦",
+      buttonNote: "周防久志・一音を見抜く",
+      label: "名人挑戦",
+      background: "assets/school/chapter-3-third-floor.webp",
+      counterDamage: 15,
+      result:
+        "一音を見抜く名人の手より先に、三首を結んだ。静かな拍手が部室に響く。",
+      opponent: {
+        id: "master_suoh",
+        order: 12,
+        name: "名人・周防久志",
+        reading: "めいじん・すおうひさし",
+        epithet: "聞こえる前の一音へ届く、気まぐれな名人",
+        archetype: "master",
+        palette: ["#242743", "#616489", "#efc86c"],
+        place: "放課後特別対戦・静寂の部室",
+        story:
+          "ずば抜けた聞き分けで決まり字の気配を捉え、余裕のある間から突然札を払う。",
+        intro: "甘い菓子を机の端へ置き、周防名人が眠そうな目で六枚を見渡した。",
+        threat:
+          "一定ではない間に惑わされれば、決まり字を理解した瞬間には札が消えている。",
+        specialOpponent: true,
+        rivalCall: "周防名人",
+      },
+      profile: {
+        rank: "周防名人・聴覚型",
+        charMs: 315,
+        cpuMs: 1120,
+        similarity: 2,
+        level: 12,
+        keyDelayFactor: 0.82,
+        jitterMin: 0.82,
+        jitterMax: 1.1,
+        styleNote: "決まり字の気配を早く捉え、ときどき間を揺らす",
+      },
+    },
+    {
+      id: "queen_shinobu",
+      buttonLabel: "クイーンへ挑戦",
+      buttonNote: "若宮詩暢・迷いのない最短手",
+      label: "クイーン挑戦",
+      background: "assets/school/chapter-2-second-floor.webp",
+      counterDamage: 16,
+      result:
+        "札と結ばれたクイーンの左手より先に、三首を取った。詩暢が小さく笑う。",
+      opponent: {
+        id: "queen_shinobu",
+        order: 13,
+        name: "クイーン・若宮詩暢",
+        reading: "くいーん・わかみやしのぶ",
+        epithet: "百枚すべてと糸を結ぶ、無音のクイーン",
+        archetype: "queen",
+        palette: ["#f5efff", "#8a77b7", "#bfe6f3"],
+        place: "放課後特別対戦・雪明かりの部室",
+        story:
+          "札を一枚ずつ友達のように覚え、決まり字まで聞いてから迷いのない最短の手で取る。",
+        intro:
+          "白い息のような静けさの中、詩暢ちゃんの左手が六枚のそばへそっと置かれた。",
+        threat:
+          "一切ぶれない正確な払いに遅れれば、六枚の配置ごと支配されてしまう。",
+        specialOpponent: true,
+        rivalCall: "詩暢クイーン",
+      },
+      profile: {
+        rank: "詩暢クイーン・精密型",
+        charMs: 310,
+        cpuMs: 1080,
+        similarity: 3,
+        level: 13,
+        keyDelayFactor: 1,
+        jitterMin: 0.98,
+        jitterMax: 1.02,
+        styleNote: "決まり字まで正確に待ち、同じ速さで最短に払う",
+      },
+    },
+  ];
+
   const chapters = [
     {
       id: "first_floor",
@@ -554,6 +667,7 @@
         0,
       ),
       rivalSpeeds,
+      specialMatches,
       chapters,
     },
   };

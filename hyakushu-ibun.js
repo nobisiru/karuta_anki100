@@ -21,6 +21,7 @@
     sessionStartedAt: Date.now(),
     pendingChapter: null,
     pendingRecovery: null,
+    specialSnapshot: null,
     raceToken: 0,
     raceTimers: [],
   };
@@ -114,7 +115,14 @@
     state.save.playSeconds = (Number(state.save.playSeconds) || 0) + elapsed;
     state.sessionStartedAt = Date.now();
     state.save.updatedAt = new Date().toISOString();
-    localStorage.setItem(SAVE_KEY, JSON.stringify(state.save));
+    const storedSave = state.specialSnapshot
+      ? {
+          ...state.save,
+          hp: state.specialSnapshot.hp,
+          mp: state.specialSnapshot.mp,
+        }
+      : state.save;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(storedSave));
   }
 
   function applySettings() {
@@ -172,6 +180,8 @@
 
   function startNewGame() {
     state.save = Core.defaultSave(DATA);
+    state.battle = null;
+    state.specialSnapshot = null;
     state.pendingChapter = null;
     state.pendingRecovery = null;
     persist();
@@ -265,6 +275,10 @@
     );
   }
 
+  function specialMatch(id) {
+    return DATA.campaign.specialMatches?.find((match) => match.id === id);
+  }
+
   function shuffle(values) {
     const result = [...values];
     for (let index = result.length - 1; index > 0; index -= 1) {
@@ -290,6 +304,7 @@
           if (chosen.length < 5 && !chosen.includes(no)) chosen.push(no);
         });
     };
+    if (profile.similarity >= 3) addMatches(3);
     if (profile.similarity >= 2) addMatches(2);
     if (profile.similarity >= 1) addMatches(1);
     shuffle(pool).forEach((no) => {
@@ -316,15 +331,20 @@
     return timer;
   }
 
-  function startEncounter() {
-    const enemy = currentEncounter();
-    const chapter = currentChapter();
-    const isBoss = enemy.boss || enemy.chapterBoss;
-    const profile = rivalProfile();
+  function beginBattle({
+    enemy,
+    profile,
+    counterDamage,
+    screenLabel,
+    background,
+    match = null,
+  }) {
+    const isBoss = enemy.boss || enemy.chapterBoss || match;
     ReaderAudio?.unlock();
     state.battle = {
       enemy,
       profile,
+      specialMatch: match,
       seals: enemy.sealPoems.map((poemNo) => ({
         poemNo,
         hp: 1,
@@ -332,31 +352,61 @@
       })),
       phase: "preview",
       currentPoemNo: null,
-      counterDamage: isBoss
-        ? chapter.difficulty.bossCounter
-        : chapter.difficulty.counter,
+      counterDamage,
       playerTakes: 0,
       opponentTakes: 0,
       mistakes: 0,
       currentSealIndex: null,
       askedPoems: new Set(enemy.sealPoems),
     };
-    showScreen(
-      "battleScreen",
-      enemy.boss ? "第四章　校長を救え" : `${chapter.label}　${enemy.place}`,
-    );
+    showScreen("battleScreen", screenLabel);
     renderBattle();
     $("#battleLog").innerHTML =
       `<b>${escapeHtml(enemy.intro)}</b><span class="enemy-threat"><i>危</i>${escapeHtml(enemy.threat)}</span>`;
     const stage = $("#enemyStage");
-    stage.style.setProperty(
-      "--chapter-background",
-      `url("${chapter.background}")`,
-    );
+    stage.style.setProperty("--chapter-background", `url("${background}")`);
+    stage.dataset.rival = match?.id || "campaign";
     updateReaderAudioStatus();
     playSound(isBoss ? "boss" : "encounter");
     vibrate(isBoss ? [40, 50, 80] : [35, 45, 35]);
     startRaceRound();
+  }
+
+  function startEncounter() {
+    const enemy = currentEncounter();
+    const chapter = currentChapter();
+    const isBoss = enemy.boss || enemy.chapterBoss;
+    beginBattle({
+      enemy,
+      profile: rivalProfile(),
+      counterDamage: isBoss
+        ? chapter.difficulty.bossCounter
+        : chapter.difficulty.counter,
+      screenLabel: enemy.boss
+        ? "第四章　校長を救え"
+        : `${chapter.label}　${enemy.place}`,
+      background: chapter.background,
+    });
+  }
+
+  function startSpecialMatch(id) {
+    const match = specialMatch(id);
+    if (!match) return;
+    clearRaceTimers();
+    state.specialSnapshot = { hp: state.save.hp, mp: state.save.mp };
+    state.save.hp = state.save.maxHp;
+    state.save.mp = state.save.maxMp;
+    const sealPoems = shuffle(
+      window.ALL_LOWER.map((_item, index) => index + 1),
+    ).slice(0, 3);
+    beginBattle({
+      enemy: { ...match.opponent, sealPoems },
+      profile: match.profile,
+      counterDamage: match.counterDamage,
+      screenLabel: match.label,
+      background: match.background,
+      match,
+    });
   }
 
   function renderBattle() {
@@ -401,20 +451,22 @@
 
   function updateRivalHud() {
     const profile = state.battle?.profile || rivalProfile();
-    const level = Math.min(
-      DATA.campaign.rivalSpeeds.length,
-      campaignBattleIndex() + 1,
-    );
+    const special = state.battle?.specialMatch;
+    const total = special
+      ? DATA.campaign.rivalSpeeds.length + 2
+      : DATA.campaign.rivalSpeeds.length;
+    const level = special
+      ? profile.level
+      : Math.min(total, campaignBattleIndex() + 1);
     $("#rivalRank").textContent = profile.rank;
-    $("#speedPips").innerHTML = DATA.campaign.rivalSpeeds
-      .map(
-        (_item, index) =>
-          `<i class="${index < level ? "active" : ""}" aria-hidden="true"></i>`,
-      )
-      .join("");
+    $("#speedPips").innerHTML = Array.from(
+      { length: total },
+      (_item, index) =>
+        `<i class="${index < level ? "active" : ""}" aria-hidden="true"></i>`,
+    ).join("");
     $("#speedPips").setAttribute(
       "aria-label",
-      `相手の強さ ${level} / ${DATA.campaign.rivalSpeeds.length}・${profile.rank}`,
+      `相手の強さ ${level} / ${total}・${profile.rank}`,
     );
   }
 
@@ -553,10 +605,16 @@
     state.raceTimers.push(readTimer);
 
     const keyDelay = Math.max(0, item.key.length - 1) * profile.charMs;
-    const jitter = 0.88 + Math.random() * 0.24;
+    const jitterMin = Number(profile.jitterMin ?? 0.88);
+    const jitterMax = Number(profile.jitterMax ?? 1.12);
+    const jitter = jitterMin + Math.random() * (jitterMax - jitterMin);
+    const keyDelayFactor = Number(profile.keyDelayFactor ?? 1);
     const opponentDelay = TEST_MODE
       ? 1000
-      : keyDelay + Math.round(profile.cpuMs * jitter);
+      : Math.max(
+          180,
+          Math.round(keyDelay * keyDelayFactor + profile.cpuMs * jitter),
+        );
     scheduleRace(() => opponentTake(token), opponentDelay, TEST_MODE);
   }
 
@@ -666,7 +724,8 @@
     const correctButton = $('[data-race-correct="true"]', $("#raceCards"));
     correctButton?.classList.add("taken");
     $("#raceReader").className = "race-reader lost";
-    $("#raceStatus").textContent = "怪異が先に払った！";
+    const rivalCall = state.battle.enemy.rivalCall || "怪異";
+    $("#raceStatus").textContent = `${rivalCall}が先に払った！`;
     $("#raceStream").textContent = poem(correctNo).key;
     $("#raceHelp").textContent =
       `${state.battle.profile.rank}の速さ・次は違う歌`;
@@ -762,6 +821,10 @@
 
   function finishBattle() {
     clearRaceTimers();
+    if (state.battle.specialMatch) {
+      showSpecialResult();
+      return;
+    }
     const enemy = state.battle.enemy;
     const chapter = currentChapter();
     const hpAtVictory = Math.round(state.save.hp);
@@ -814,6 +877,29 @@
     showResult(enemy, rewards);
   }
 
+  function showSpecialResult() {
+    const {
+      enemy,
+      profile,
+      playerTakes,
+      opponentTakes,
+      mistakes,
+      specialMatch: match,
+    } = state.battle;
+    $("#resultTitle").textContent = `${enemy.name}に勝利！`;
+    $("#resultSummary").textContent = match.result;
+    $("#rewardRows").innerHTML = `<div class="special-result-summary">
+      <div><span>勝負</span><b>${playerTakes}首先取</b></div>
+      <div><span>相手の先取</span><b>${opponentTakes}回</b></div>
+      <div><span>お手つき</span><b>${mistakes}回</b></div>
+      <p>${escapeHtml(profile.styleNote)}</p>
+    </div>`;
+    $("#resultDoneButton").textContent = "特別対戦へ戻る";
+    setModal($("#resultModal"), true);
+    playSound("victory");
+    vibrate([30, 30, 70, 45, 100]);
+  }
+
   function showResult(enemy, rewards) {
     $("#resultTitle").textContent = enemy.boss
       ? "校長を満月から救い出した！"
@@ -846,10 +932,27 @@
 
   function finishResult() {
     setModal($("#resultModal"), false);
+    if (state.battle?.specialMatch) {
+      finishSpecialMatch();
+      return;
+    }
     if (state.save.cleared) renderVictory();
     else if (state.pendingChapter)
       renderChapterTransition(state.pendingChapter);
     else renderField();
+  }
+
+  function finishSpecialMatch() {
+    clearRaceTimers();
+    if (state.specialSnapshot) {
+      state.save.hp = state.specialSnapshot.hp;
+      state.save.mp = state.specialSnapshot.mp;
+    }
+    state.specialSnapshot = null;
+    state.battle = null;
+    persist();
+    refreshTitle();
+    showScreen("titleScreen", "花守小学校");
   }
 
   function renderChapterTransition(chapter) {
@@ -1015,12 +1118,21 @@
 
   function bindEvents() {
     $("#topButton").addEventListener("click", () => {
+      if (state.battle?.specialMatch) {
+        finishSpecialMatch();
+        return;
+      }
       clearRaceTimers();
       persist();
       location.href = "index.html";
     });
     $("#newGameButton").addEventListener("click", startNewGame);
     $("#continueButton").addEventListener("click", continueGame);
+    $$("[data-special-match]").forEach((button) =>
+      button.addEventListener("click", () =>
+        startSpecialMatch(button.dataset.specialMatch),
+      ),
+    );
     $("#startJourneyButton").addEventListener("click", renderField);
     $("#chapterContinueButton").addEventListener("click", () => {
       state.pendingChapter = null;
@@ -1071,6 +1183,8 @@
       localStorage.removeItem(SAVE_KEY);
       localStorage.removeItem(OLD_SAVE_KEY);
       state.save = Core.defaultSave(DATA, 7261);
+      state.battle = null;
+      state.specialSnapshot = null;
       setModal($("#settingsModal"), false);
       refreshTitle();
       showScreen("titleScreen", "花守小学校");
@@ -1083,6 +1197,11 @@
     });
     window.addEventListener("pagehide", () => {
       clearRaceTimers();
+      if (state.battle?.specialMatch && state.specialSnapshot) {
+        state.save.hp = state.specialSnapshot.hp;
+        state.save.mp = state.specialSnapshot.mp;
+        state.specialSnapshot = null;
+      }
       persist();
     });
     window.addEventListener("beforeunload", persist);

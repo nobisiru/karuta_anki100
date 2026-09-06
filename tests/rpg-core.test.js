@@ -162,6 +162,38 @@ assert.deepEqual(
   { rank: "名人級", charMs: 320, cpuMs: 1200, similarity: 2 },
   "校長に憑依した道長はトレーニングの名人級",
 );
+assert.equal(data.campaign.specialMatches.length, 3, "特別対戦が3モードある");
+assert.deepEqual(
+  data.campaign.specialMatches.map((match) => match.id),
+  ["michinaga_duel", "master_suoh", "queen_shinobu"],
+  "道長・名人・クイーンの順に選べる",
+);
+const [michinagaMatch, masterMatch, queenMatch] = data.campaign.specialMatches;
+assert.equal(
+  michinagaMatch.profile.cpuMs,
+  data.campaign.rivalSpeeds.at(-1).cpuMs,
+  "道長対戦は学校編最終戦と同じ名人級速度",
+);
+for (const match of [masterMatch, queenMatch]) {
+  assert.ok(
+    match.profile.cpuMs < michinagaMatch.profile.cpuMs,
+    `${match.opponent.name}は道長より速い`,
+  );
+  assert.ok(
+    match.profile.cpuMs >= michinagaMatch.profile.cpuMs * 0.85,
+    `${match.opponent.name}は道長よりわずかに速い範囲`,
+  );
+}
+assert.ok(
+  masterMatch.profile.keyDelayFactor < 1 &&
+    masterMatch.profile.jitterMax - masterMatch.profile.jitterMin > 0.2,
+  "周防名人は聞き分けが早く、取りの間に揺らぎがある",
+);
+assert.ok(
+  queenMatch.profile.jitterMax - queenMatch.profile.jitterMin <= 0.05 &&
+    queenMatch.profile.similarity === 3,
+  "詩暢クイーンは精密で紛らわしい六枚にも強い",
+);
 assert.match(
   data.boss.name,
   /校長.*藤原道長/,

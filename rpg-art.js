@@ -228,6 +228,45 @@
     );
   }
 
+  function master(monster) {
+    return base(
+      monster,
+      `<circle cx="210" cy="145" r="112" fill="none" stroke="${monster.palette[2]}" stroke-width="2" opacity=".34"/>
+      <path d="M99 305q25-125 78-146h70q52 20 74 146z" fill="url(#body-${monster.id})"/>
+      <path d="M141 288q12-89 42-125l27 29 27-29q31 37 42 125" fill="none" stroke="#777da6" stroke-width="19" opacity=".64"/>
+      <path d="M170 147q-5-70 40-89 46 18 40 89l-11 56h-59z" fill="#d8bfa7"/>
+      <path d="M158 119q7-78 54-78 53 4 60 68-31-19-56-8-33 16-58 18z" fill="#171a2c"/>
+      <path d="M164 114q21-24 48-25 33-1 57 20l-18 24-79 4z" fill="#22253e"/>
+      <path d="M177 134q17-8 30 1M216 135q16-9 30-1" fill="none" stroke="#433746" stroke-width="5"/>
+      <path d="M194 167q16 8 31-2" fill="none" stroke="#704b53" stroke-width="4"/>
+      <path d="M174 150h34m8 0h32" stroke="#31344e" stroke-width="4"/><circle cx="210" cy="150" r="4" fill="#31344e"/>
+      <path d="M145 235l-70 67M276 237l70 66" stroke="#272b48" stroke-width="28" stroke-linecap="round"/>
+      <path d="M85 293l-17 22M337 293l18 22" stroke="#d4b89d" stroke-width="14" stroke-linecap="round"/>
+      <g transform="translate(301 244) rotate(9)"><rect x="-28" y="-20" width="56" height="40" rx="8" fill="#f4e5bd" stroke="#d4ae58" stroke-width="3"/><circle cx="-10" cy="0" r="4" fill="#bc8d42"/><circle cx="6" cy="-5" r="4" fill="#bc8d42"/><circle cx="12" cy="8" r="4" fill="#bc8d42"/></g>
+      <g opacity=".72" fill="${monster.palette[2]}"><circle cx="93" cy="123" r="4"/><circle cx="326" cy="103" r="5"/><circle cx="111" cy="70" r="3"/></g>`,
+    );
+  }
+
+  function queen(monster) {
+    return base(
+      monster,
+      `<circle cx="210" cy="143" r="118" fill="#d9f2fb" opacity=".1"/>
+      <path d="M82 305q31-133 99-153h58q68 20 99 153z" fill="url(#body-${monster.id})"/>
+      <path d="M117 302q28-101 76-141l17 42 18-42q48 40 76 141" fill="none" stroke="#ede7fa" stroke-width="25" opacity=".72"/>
+      <path d="M173 141q-3-67 37-84 42 17 38 84l-10 61h-57z" fill="#f0d4c2"/>
+      <path d="M151 147q-3-92 59-105 64 13 60 106l-20 83-16-91-24-48-25 48-15 91z" fill="#171a30"/>
+      <path d="M160 102q17-59 50-60 37 2 54 60-52-25-104 0z" fill="#262943"/>
+      <path d="M177 133q14-8 27 1M217 134q14-9 27-1" fill="none" stroke="#4b3e58" stroke-width="5"/>
+      <g class="monster-eyes" fill="#5f4c83"><circle cx="192" cy="137" r="5"/><circle cx="229" cy="137" r="5"/></g>
+      <circle cx="239" cy="151" r="3" fill="#705578"/><path d="M197 165q13 7 27-1" fill="none" stroke="#a36275" stroke-width="4"/>
+      <path d="M145 232l-77 65M274 230l78 67" stroke="#76689c" stroke-width="27" stroke-linecap="round"/>
+      <path d="M75 291l-18 19M345 291l18 19" stroke="#efd1bf" stroke-width="14" stroke-linecap="round"/>
+      <path d="M180 204l30 28 30-28v91h-60z" fill="#f5f0fb" stroke="#a58ec3" stroke-width="5"/>
+      <g stroke="#bfe6f3" stroke-width="3" opacity=".8"><path d="M210 236v48M190 248l40 24M230 248l-40 24"/><path d="M91 88l14 24 27 3-20 18 6 27-27-14-24 14 5-27-20-18 28-3z" fill="none"/></g>
+      <g opacity=".7" fill="#e8f8ff"><circle cx="111" cy="62" r="5"/><circle cx="318" cy="88" r="4"/><circle cx="335" cy="155" r="3"/><circle cx="82" cy="181" r="4"/></g>`,
+    );
+  }
+
   const renderers = {
     fox,
     ink,
@@ -240,6 +279,8 @@
     moth,
     centipede,
     boss,
+    master,
+    queen,
   };
 
   function monsterSvg(monster) {
@@ -247,10 +288,15 @@
   }
 
   function monsterImage(monster) {
-    return `assets/monsters/${monster.id}.webp`;
+    return `assets/monsters/${monster.imageId || monster.id}.webp`;
   }
 
   function monsterMarkup(monster) {
+    if (
+      monster.specialOpponent &&
+      ["master", "queen"].includes(monster.archetype)
+    )
+      return `<div class="special-rival-portrait ${monster.archetype}">${monsterSvg(monster)}</div>`;
     const bossClass = monster.boss ? " boss-monster" : "";
     return `<img class="painted-monster${bossClass}" src="${monsterImage(monster)}" alt="${monster.name}――${monster.epithet}" width="960" height="960" decoding="async" draggable="false">`;
   }

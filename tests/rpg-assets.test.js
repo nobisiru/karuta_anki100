@@ -82,6 +82,13 @@ assert.match(
   "学校を守るかるた部の物語を入口にする",
 );
 assert.match(html, /最初の六枚へ/, "6枚取りで学校編を始める導線がある");
+for (const mode of ["michinaga_duel", "master_suoh", "queen_shinobu"]) {
+  assert.match(
+    html,
+    new RegExp(`data-special-match="${mode}"`),
+    `${mode}へタイトルから直接挑戦できる`,
+  );
+}
 assert.match(html, /id="raceCards"/, "6枚取りバトルの札場がある");
 assert.match(
   html,
@@ -112,6 +119,11 @@ assert.match(
   gameCss,
   /HANAMORI SCHOOL CAMPAIGN/,
   "学校キャンペーンの専用ビジュアルが存在する",
+);
+assert.match(
+  gameCss,
+  /Special exhibition matches/,
+  "特別対戦の専用UIが存在する",
 );
 assert.match(gameCss, /--sakura: #ee9db6/, "桜色をテーマカラーにする");
 assert.match(

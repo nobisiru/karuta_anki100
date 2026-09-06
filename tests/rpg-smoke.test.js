@@ -209,10 +209,75 @@ async function defeatCurrentEnemy(battleNumber) {
   assert.equal($("#rewardRows").children.length, 3, "3首へカケラが付与される");
 }
 
+async function winSpecialMatch() {
+  for (let round = 0; round < 3; round += 1) {
+    await waitFor(
+      () =>
+        !$("#raceCards").classList.contains("waiting") &&
+        $("#raceStatus").textContent === "読み進行中",
+      "特別対戦の読みが始まる",
+    );
+    click($('#raceCards [data-race-correct="true"]'));
+  }
+  await waitFor(
+    () => $("#resultModal").hidden === false,
+    "特別対戦の勝利結果が出る",
+  );
+}
+
 (async () => {
   assert.ok(
     $("#titleScreen").classList.contains("active"),
     "タイトル画面から始まる",
+  );
+  assert.equal(
+    window.document.querySelectorAll("[data-special-match]").length,
+    3,
+    "タイトルから3つの特別対戦を選べる",
+  );
+
+  click('[data-special-match="michinaga_duel"]');
+  assert.equal($("#rivalRank").textContent, "道長・名人級");
+  assert.ok($("#monsterArt .painted-monster"), "道長の怪異画を表示する");
+  click("#topButton");
+  assert.ok(
+    $("#titleScreen").classList.contains("active"),
+    "特別対戦からタイトルへ戻れる",
+  );
+
+  click('[data-special-match="master_suoh"]');
+  assert.equal($("#rivalRank").textContent, "周防名人・聴覚型");
+  assert.ok($("#monsterArt .special-rival-portrait.master"));
+  assert.equal(
+    window.document.querySelectorAll("#speedPips .active").length,
+    12,
+    "周防名人は道長より一段速い",
+  );
+  click("#topButton");
+
+  click('[data-special-match="queen_shinobu"]');
+  assert.equal($("#rivalRank").textContent, "詩暢クイーン・精密型");
+  assert.ok($("#monsterArt .special-rival-portrait.queen"));
+  assert.equal(
+    window.document.querySelectorAll("#speedPips .active").length,
+    13,
+    "詩暢クイーンは最高速度段階",
+  );
+  await winSpecialMatch();
+  assert.match($("#resultTitle").textContent, /若宮詩暢.*勝利/);
+  assert.ok($("#rewardRows .special-result-summary"));
+  click("#resultDoneButton");
+  assert.ok(
+    $("#titleScreen").classList.contains("active"),
+    "勝利後は特別対戦の選択へ戻る",
+  );
+  const afterSpecial = JSON.parse(
+    window.localStorage.getItem("hyakushu_ibun_save_v2"),
+  );
+  assert.equal(
+    afterSpecial.hp,
+    afterSpecial.maxHp,
+    "特別対戦は学校編HPを消費しない",
   );
 
   click("#newGameButton");
@@ -333,8 +398,8 @@ async function defeatCurrentEnemy(battleNumber) {
   assert.equal(clearSave.guardBonus, 2, "三階報酬で守りが上がる");
   assert.equal(
     readerCalls.length,
-    36,
-    "全33首と2回のお手つき・怪異先取で音声を呼ぶ",
+    41,
+    "学校編36回と特別対戦5回で読手音声を呼ぶ",
   );
   assert.ok(readerCalls.every((no) => no >= 1 && no <= 100));
 
