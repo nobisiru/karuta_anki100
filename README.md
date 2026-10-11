@@ -4,6 +4,7 @@ GitHub Pagesで動く、百人一首の読み取りトレーニングとRPG「�
 
 - `index.html`: 読み取りトレーニングのTOP
 - `listen-reveal-mode.js`: 上の句音声を決まり字まで聞き、下の句札を最速表示する連続暗記モード
+- `camera-fuda-mode.js`: スマホカメラで札並びを撮影し、上の句冒頭5文字を赤字で重ねる端末内OCRモード
 - `hyakushu-ibun.html`: RPG「百首異聞」第一章・平安編
 - `data.js`: 既存の100首下の句データ
 - `rpg-data.js`: 怪異、ボス、決まり字、共鳴データ
