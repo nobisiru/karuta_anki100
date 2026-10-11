@@ -280,28 +280,83 @@
       const video = $("#cameraFudaVideo");
       video.srcObject = stream;
       await video.play();
-      if (video.videoWidth && video.videoHeight) {
-        setFrameAspect(video.videoWidth, video.videoHeight);
-      } else {
-        video.addEventListener(
-          "loadedmetadata",
-          () => {
-            setFrameAspect(video.videoWidth, video.videoHeight);
-          },
-          { once: true },
-        );
-      }
       $("#cameraFudaFrame").classList.remove("still");
-      $("#cameraFudaCapture").disabled = false;
+      $("#cameraFudaCapture").disabled = true;
       $("#cameraFudaScan").disabled = true;
       $("#cameraFudaManual").disabled = true;
       $("#cameraFudaRetake").disabled = true;
+      setStatus("カメラ映像を準備しています…");
+      await waitForVideoFrame(video);
+      if (video.videoWidth && video.videoHeight) {
+        setFrameAspect(video.videoWidth, video.videoHeight);
+      }
+      $("#cameraFudaCapture").disabled = false;
       setStatus("札全体を画面に入れ、文字にピントを合わせて撮影してください。");
     } catch (error) {
+      stopStream();
       setStatus(
-        "カメラを使えませんでした。ブラウザのカメラ許可を確認するか、写真を選んでください。",
+        "カメラ映像を取得できませんでした。もう一度起動するか、「写真を選ぶ／撮影」を使ってください。",
         true,
       );
+    }
+  }
+
+  function waitForVideoFrame(video) {
+    return new Promise((resolve, reject) => {
+      const deadline = Date.now() + 8000;
+      let frameRequested = false;
+      const timeoutId = window.setTimeout(
+        () => reject(new Error("カメラの映像フレームを取得できません")),
+        8000,
+      );
+      const finish = () => {
+        window.clearTimeout(timeoutId);
+        resolve();
+      };
+      const check = () => {
+        if (
+          video.readyState >= 2 &&
+          video.videoWidth > 0 &&
+          video.videoHeight > 0
+        ) {
+          if (!frameRequested && video.requestVideoFrameCallback) {
+            frameRequested = true;
+            video.requestVideoFrameCallback(finish);
+            return;
+          }
+          if (!video.requestVideoFrameCallback) {
+            finish();
+            return;
+          }
+        }
+        if (Date.now() >= deadline) {
+          reject(new Error("カメラの映像フレームを取得できません"));
+          return;
+        }
+        window.setTimeout(check, 50);
+      };
+      check();
+    });
+  }
+
+  function isUsableCameraFrame(context, width, height) {
+    try {
+      const sampleSize = 12;
+      const pixels = context.getImageData(
+        Math.max(0, Math.floor(width / 2 - sampleSize / 2)),
+        Math.max(0, Math.floor(height / 2 - sampleSize / 2)),
+        Math.min(sampleSize, width),
+        Math.min(sampleSize, height),
+      ).data;
+      let brightness = 0;
+      for (let index = 0; index < pixels.length; index += 4) {
+        brightness +=
+          (pixels[index] + pixels[index + 1] + pixels[index + 2]) / 3;
+      }
+      return pixels.length > 0 && brightness / (pixels.length / 4) >= 8;
+    } catch (_error) {
+      // Pixel inspection can be unavailable in some browsers; keep capture usable.
+      return true;
     }
   }
 
@@ -345,7 +400,15 @@
     const canvas = $("#cameraFudaCanvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (!isUsableCameraFrame(context, canvas.width, canvas.height)) {
+      setStatus(
+        "撮影画像が真っ黒でした。明るさを確認してもう一度撮影してください。写真から読み取る場合は「写真を選ぶ／撮影」を使えます。",
+        true,
+      );
+      return;
+    }
     labels = [];
     prepareCapturedImage(canvas.width, canvas.height);
     stopStream();
@@ -529,6 +592,70 @@
     return matched;
   }
 
+  function mergeMatches(target, additions, offsetX = 0, offsetY = 0) {
+    additions.forEach((addition, number) => {
+      const bbox = {
+        x0: addition.bbox.x0 + offsetX,
+        y0: addition.bbox.y0 + offsetY,
+        x1: addition.bbox.x1 + offsetX,
+        y1: addition.bbox.y1 + offsetY,
+      };
+      const existing = target.get(number);
+      if (!existing) {
+        target.set(number, { ...addition, bbox });
+        return;
+      }
+      existing.bbox.x0 = Math.min(existing.bbox.x0, bbox.x0);
+      existing.bbox.y0 = Math.min(existing.bbox.y0, bbox.y0);
+      existing.bbox.x1 = Math.max(existing.bbox.x1, bbox.x1);
+      existing.bbox.y1 = Math.max(existing.bbox.y1, bbox.y1);
+      existing.score = Math.max(existing.score, addition.score);
+    });
+  }
+
+  async function scanBoardTiles(ocr, source) {
+    const matches = new Map();
+    const textBlocks = [];
+    const columns = 2;
+    const rows = 3;
+    const overlapX = Math.round(source.width * 0.12);
+    const overlapY = Math.round(source.height * 0.08);
+    const tileWidth = Math.ceil(source.width / columns) + overlapX;
+    const tileHeight = Math.ceil(source.height / rows) + overlapY;
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let column = 0; column < columns; column += 1) {
+        const x = Math.max(
+          0,
+          Math.round((source.width * column) / columns - overlapX / 2),
+        );
+        const y = Math.max(
+          0,
+          Math.round((source.height * row) / rows - overlapY / 2),
+        );
+        const width = Math.min(tileWidth, source.width - x);
+        const height = Math.min(tileHeight, source.height - y);
+        const tile = document.createElement("canvas");
+        tile.width = width;
+        tile.height = height;
+        tile
+          .getContext("2d")
+          .drawImage(source, x, y, width, height, 0, 0, width, height);
+        const ocrTile = makeOcrCanvas(tile);
+        const result = await ocr.recognize(ocrTile, {}, { blocks: true });
+        const blocks = collectBlocks(result.data || {});
+        textBlocks.push(...blocks);
+        mergeMatches(
+          matches,
+          findMatches(blocks, width / ocrTile.width, height / ocrTile.height),
+          x,
+          y,
+        );
+      }
+    }
+    return { matches, textBlocks };
+  }
+
   async function scanCards() {
     const canvas = $("#cameraFudaCanvas");
     if (!canvas.width || !canvas.height) return;
@@ -549,6 +676,15 @@
         canvas.width / ocrCanvas.width,
         canvas.height / ocrCanvas.height,
       );
+
+      // A wide spread of cards leaves each poem small in a full-photo scan.
+      // On portrait board photos, scan overlapping regions at higher detail.
+      if (canvas.height > canvas.width * 1.05 && matched.size < 3) {
+        setLoading("札を分けて詳しく読み取っています…<br>写真は端末内で処理中");
+        const tiled = await scanBoardTiles(ocr, canvas);
+        mergeMatches(matched, tiled.matches);
+        blocks = [...blocks, ...tiled.textBlocks];
+      }
 
       if (!matched.size) {
         await ocr.setParameters({

@@ -20,7 +20,13 @@ let currentPsm = "11";
 
 window.URL.createObjectURL = () => "blob:test-photo";
 window.URL.revokeObjectURL = () => {};
-window.HTMLCanvasElement.prototype.getContext = () => ({ drawImage: () => {} });
+let cameraPixels = 180;
+window.HTMLCanvasElement.prototype.getContext = () => ({
+  drawImage: () => {},
+  getImageData: () => ({
+    data: new Uint8ClampedArray(12 * 12 * 4).fill(cameraPixels),
+  }),
+});
 window.Image = class {
   naturalWidth = 1000;
   naturalHeight = 700;
@@ -212,6 +218,50 @@ function tick(milliseconds = 0) {
     2,
     "manual placement adds a second label to the photograph",
   );
+
+  let stoppedTracks = 0;
+  Object.defineProperty(window.navigator, "mediaDevices", {
+    configurable: true,
+    value: {
+      getUserMedia: async () => ({
+        getTracks: () => [{ stop: () => stoppedTracks++ }],
+      }),
+    },
+  });
+  const video = document.querySelector("#cameraFudaVideo");
+  Object.defineProperties(video, {
+    readyState: { configurable: true, value: 2 },
+    videoWidth: { configurable: true, value: 1280 },
+    videoHeight: { configurable: true, value: 720 },
+  });
+  video.play = async () => {};
+  video.requestVideoFrameCallback = (callback) => callback();
+  await click("#cameraFudaStart").onclick?.();
+  await tick();
+  assert.strictEqual(
+    document.querySelector("#cameraFudaCapture").disabled,
+    false,
+    "capture becomes available after a decoded camera frame",
+  );
+  cameraPixels = 0;
+  click("#cameraFudaCapture");
+  assert.match(
+    document.querySelector("#cameraFudaStatus").textContent,
+    /真っ黒/,
+  );
+  assert.strictEqual(
+    document.querySelector("#cameraFudaScan").disabled,
+    true,
+    "a black camera frame cannot be sent to OCR",
+  );
+  cameraPixels = 180;
+  click("#cameraFudaCapture");
+  assert.strictEqual(
+    document.querySelector("#cameraFudaScan").disabled,
+    false,
+    "a usable camera frame proceeds to OCR",
+  );
+  assert(stoppedTracks > 0, "camera stream stops after a successful capture");
 
   forceFallback = true;
   click("#cameraFudaScan");
