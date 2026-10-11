@@ -15,6 +15,8 @@ const dom = new JSDOM(
 const { window } = dom;
 const document = window.document;
 let recognizeCalls = 0;
+let forceFallback = false;
+let currentPsm = "11";
 
 window.URL.createObjectURL = () => "blob:test-photo";
 window.URL.revokeObjectURL = () => {};
@@ -28,7 +30,7 @@ window.Image = class {
 };
 
 window.Tesseract = {
-  PSM: { SPARSE_TEXT: "11" },
+  PSM: { AUTO: "3", SPARSE_TEXT: "11" },
   createWorker: async (language, count, options) => {
     assert.strictEqual(
       language,
@@ -39,23 +41,37 @@ window.Tesseract = {
     assert.strictEqual(typeof options.logger, "function");
     return {
       setParameters: async (parameters) => {
-        assert.strictEqual(parameters.tessedit_pageseg_mode, "11");
-        assert.match(parameters.tessedit_char_whitelist, /あ/);
+        if (parameters.tessedit_pageseg_mode) {
+          currentPsm = parameters.tessedit_pageseg_mode;
+        }
+        if (parameters.tessedit_char_whitelist) {
+          assert.match(parameters.tessedit_char_whitelist, /あ/);
+        }
       },
-      recognize: async (_canvas, _options, output) => {
+      recognize: async (ocrCanvas, _options, output) => {
         recognizeCalls += 1;
+        if (recognizeCalls === 1) {
+          assert.strictEqual(
+            ocrCanvas.width,
+            1800,
+            "photo is enlarged for OCR",
+          );
+        }
         assert.strictEqual(
           output.blocks,
           true,
           "OCR returns positioned text blocks",
         );
+        if (forceFallback && recognizeCalls === 2) {
+          return { data: { blocks: [] } };
+        }
         return {
           data: {
             blocks: [
               {
-                text: "からくれなゐにみつくくるとは",
+                text: "からくれなゐに",
                 confidence: 91,
-                bbox: { x0: 160, y0: 120, x1: 420, y1: 590 },
+                bbox: { x0: 288, y0: 216, x1: 756, y1: 1062 },
               },
             ],
           },
@@ -98,6 +114,16 @@ function tick(milliseconds = 0) {
     "OCR text maps to the matching karuta",
   );
   assert.strictEqual(
+    window.KarutaCameraFudaMode.matchTextToPoem("からくれなゐに")?.number,
+    17,
+    "one vertical text column can match even when OCR splits the poem",
+  );
+  assert.strictEqual(
+    window.KarutaCameraFudaMode.matchTextToPoem("からくれ")?.number,
+    17,
+    "a unique four-character OCR fragment can still identify its card",
+  );
+  assert.strictEqual(
     window.KarutaCameraFudaMode.matchTextToPoem("ほとんど関係ない文字列"),
     null,
     "unrelated text is rejected instead of labeling the wrong card",
@@ -122,6 +148,11 @@ function tick(milliseconds = 0) {
     recognizeCalls,
     1,
     "photo is analyzed by the local OCR worker",
+  );
+  assert.strictEqual(
+    document.querySelector("#cameraFudaDebug").hidden,
+    false,
+    "raw OCR text is available to diagnose a miss",
   );
   assert.match(
     document.querySelector("#cameraFudaResultText").textContent,
@@ -180,6 +211,17 @@ function tick(milliseconds = 0) {
     document.querySelectorAll(".camera-fuda-label").length,
     2,
     "manual placement adds a second label to the photograph",
+  );
+
+  forceFallback = true;
+  click("#cameraFudaScan");
+  await tick();
+  assert.strictEqual(recognizeCalls, 3, "failed sparse OCR retries the photo");
+  assert.strictEqual(currentPsm, "11", "sparse OCR settings are restored");
+  assert.match(
+    document.querySelector("#cameraFudaResultText").textContent,
+    /1枚/,
+    "automatic-segmentation retry can recover a missed card",
   );
 
   click("#cameraFudaBack");

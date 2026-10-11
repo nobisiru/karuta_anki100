@@ -7,7 +7,7 @@
   const OCR_CDN =
     "https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js";
   const JPN_CHARACTERS =
-    "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんゐゑがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ";
+    "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんゐゑがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽぁぃぅぇぉっゃゅょゎー";
 
   let page;
   let stream = null;
@@ -65,29 +65,81 @@
     const source = normalize(text);
     const phrase = normalize(target);
     if (!source || !phrase) return { score: 0, distance: Infinity };
+
     let best = { score: 0, distance: Infinity };
-    const minLength = Math.max(5, phrase.length - 5);
-    const maxLength = Math.min(source.length, phrase.length + 5);
-    for (let length = minLength; length <= maxLength; length += 1) {
-      for (let start = 0; start + length <= source.length; start += 1) {
-        const sample = source.slice(start, start + length);
-        const distance = levenshtein(sample, phrase);
-        const score = 1 - distance / Math.max(sample.length, phrase.length);
-        if (score > best.score) best = { score, distance };
+    const sourceMin =
+      source.length > phrase.length + 2
+        ? Math.max(4, phrase.length - 2)
+        : source.length;
+    const sourceMax =
+      source.length > phrase.length + 2
+        ? Math.min(source.length, phrase.length + 2)
+        : source.length;
+    for (
+      let sourceLength = sourceMin;
+      sourceLength <= sourceMax;
+      sourceLength += 1
+    ) {
+      for (
+        let sourceStart = 0;
+        sourceStart + sourceLength <= source.length;
+        sourceStart += 1
+      ) {
+        const sample = source.slice(sourceStart, sourceStart + sourceLength);
+        const targetMin = Math.max(4, sample.length - 2);
+        const targetMax = Math.min(phrase.length, sample.length + 2);
+        for (
+          let targetLength = targetMin;
+          targetLength <= targetMax;
+          targetLength += 1
+        ) {
+          for (
+            let targetStart = 0;
+            targetStart + targetLength <= phrase.length;
+            targetStart += 1
+          ) {
+            const fragment = phrase.slice(
+              targetStart,
+              targetStart + targetLength,
+            );
+            const distance = levenshtein(sample, fragment);
+            const score =
+              1 - distance / Math.max(sample.length, fragment.length);
+            if (score > best.score) best = { score, distance };
+          }
+        }
       }
     }
     return best;
   }
 
   function matchTextToPoem(text) {
-    let match = null;
-    poems().forEach((poem, index) => {
-      const result = bestDistance(text, poem.lower);
-      if (!match || result.score > match.score) {
-        match = { number: index + 1, score: result.score, poem };
-      }
-    });
-    return match && match.score >= 0.48 ? match : null;
+    const length = normalize(text).length;
+    if (length < 4) return null;
+    const ranked = poems()
+      .map((poem, index) => ({
+        number: index + 1,
+        poem,
+        ...bestDistance(text, poem.lower),
+      }))
+      .sort((left, right) => right.score - left.score);
+    const best = ranked[0];
+    const runnerUp = ranked[1];
+    if (!best) return null;
+
+    // Short fragments are common across poems. Require a clear winner so a
+    // five-character OCR fragment cannot label a neighboring card by chance.
+    const minimumScore =
+      length <= 5 ? 0.99 : length <= 7 ? 0.8 : length <= 10 ? 0.72 : 0.6;
+    const minimumGap =
+      length <= 4 ? 0.25 : length <= 5 ? 0.18 : length <= 7 ? 0.1 : 0.06;
+    if (
+      best.score < minimumScore ||
+      best.score - (runnerUp?.score || 0) < minimumGap
+    ) {
+      return null;
+    }
+    return best;
   }
 
   function firstFive(number) {
@@ -105,6 +157,7 @@
 .camera-fuda-guide{background:#fff7f3;border-left:4px solid #bd3348;border-radius:9px;padding:8px 10px;color:#62534f;font-size:10px;line-height:1.55;margin:8px 0}.camera-fuda-guide b{color:#a22639}
 .camera-fuda-video-wrap{position:relative;width:100%;min-height:260px;max-height:62dvh;background:#151515;border-radius:14px;overflow:hidden;display:grid;place-items:center;touch-action:manipulation}.camera-fuda-video-wrap video,.camera-fuda-video-wrap canvas{display:block;width:100%;height:auto;max-height:62dvh;object-fit:contain}.camera-fuda-video-wrap canvas{display:none}.camera-fuda-video-wrap.still canvas{display:block}.camera-fuda-video-wrap.still video{display:none}.camera-fuda-overlay{position:absolute;inset:0;overflow:hidden;pointer-events:none}.camera-fuda-overlay.manual{pointer-events:auto;cursor:crosshair}.camera-fuda-label{position:absolute;transform:translate(-50%,-112%);pointer-events:auto;display:flex;align-items:center;gap:1px;border:2px solid #b40d2a;border-radius:5px;background:rgba(255,255,255,.92);color:#a8001f;padding:1px 3px;font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-weight:1000;font-size:clamp(12px,3.8vw,19px);line-height:1.2;white-space:nowrap;text-shadow:0 1px #fff;box-shadow:0 1px 6px #0005;cursor:pointer}.camera-fuda-label.low-confidence{border-style:dashed}.camera-fuda-remove{border:0;background:transparent;color:#a8001f;font-family:system-ui,sans-serif;font-size:12px;font-weight:900;padding:0 2px;line-height:1}
 .camera-fuda-controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.camera-fuda-controls button,.camera-fuda-controls label{display:grid;place-items:center;min-height:43px;border:1px solid #d7d0c5;border-radius:11px;background:#fff;color:#5f5a52;padding:8px 5px;font-size:11px;font-weight:900;text-align:center}.camera-fuda-controls .camera-capture,.camera-fuda-controls .camera-scan{background:#a62c42;color:#fff;border-color:#a62c42}.camera-fuda-controls .camera-scan{background:#315f42;border-color:#315f42}.camera-fuda-controls .camera-fallback{grid-column:1/-1}.camera-fuda-controls input{display:none}.camera-fuda-controls button:disabled{opacity:.4}.camera-fuda-status{min-height:22px;text-align:center;color:#746f66;font-size:10px;line-height:1.5;margin:7px 0}.camera-fuda-status.error{color:#b42339}.camera-fuda-results{display:flex;justify-content:space-between;align-items:center;color:#5f5a52;font-size:10px;font-weight:800;margin-top:8px}.camera-fuda-empty{text-align:center;color:#857e73;font-size:10px;padding:8px}
+.camera-fuda-debug{margin-top:6px;color:#756e63;font-size:10px}.camera-fuda-debug summary{cursor:pointer;font-weight:800}.camera-fuda-debug pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border-radius:8px;padding:8px;max-height:120px;overflow:auto;font:11px/1.5 monospace}
 .camera-fuda-picker{position:fixed;inset:0;z-index:120;background:#0009;display:none;align-items:flex-end;justify-content:center}.camera-fuda-picker.show{display:flex}.camera-fuda-picker-panel{width:min(430px,100%);height:min(76dvh,650px);background:#fbf8f1;border-radius:20px 20px 0 0;padding:12px;display:flex;flex-direction:column}.camera-fuda-picker-head{display:flex;justify-content:space-between;align-items:center;font-weight:900}.camera-fuda-picker-head button{border:0;border-radius:50%;width:34px;height:34px;background:#eae4d9;font-size:19px}.camera-fuda-search{border:1px solid #d7d0c5;border-radius:11px;background:#fff;padding:12px;margin:8px 0;font-size:14px}.camera-fuda-poem-list{overflow:auto;display:grid;gap:5px}.camera-fuda-poem-option{display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center;border:1px solid #e1d9cd;border-radius:10px;background:#fff;text-align:left;padding:9px;color:#393630}.camera-fuda-poem-option small{display:block;color:#9e2e41;font-weight:900}.camera-fuda-poem-option span{font-family:"Yu Mincho",serif;font-size:12px;line-height:1.5}.camera-fuda-no-result{font-size:11px;color:#746f66;padding:12px;text-align:center}
 .camera-fuda-loading{position:absolute;inset:0;background:#181818d9;color:white;display:none;place-items:center;text-align:center;padding:24px;font-size:13px;font-weight:900;line-height:1.65}.camera-fuda-loading.show{display:grid}.camera-fuda-footer{font-size:9px;line-height:1.55;color:#827a70;margin-top:8px}
 `;
@@ -142,6 +195,7 @@
           <label class="camera-fallback camera-fallback">写真を選ぶ／撮影<input id="cameraFudaFile" type="file" accept="image/*" capture="environment"></label>
         </div>
         <div class="camera-fuda-results"><span id="cameraFudaResultText">まだ札を読み取っていません</span><span id="cameraFudaConfidence"></span></div>
+        <details id="cameraFudaDebug" class="camera-fuda-debug" hidden><summary>OCRで読み取った文字を確認</summary><pre id="cameraFudaDebugText"></pre></details>
         <div class="camera-fuda-footer">写真と読み取った文字はこの端末内で処理し、サーバーへ送信しません。初回のみOCRエンジンと言語データをCDNから読み込みます。赤いラベルをタップすると札の対応を修正できます。</div>
       </div>
       <div id="cameraFudaPicker" class="camera-fuda-picker" role="dialog" aria-modal="true" aria-label="札を選ぶ">
@@ -266,6 +320,8 @@
   function prepareCapturedImage(width, height) {
     scanImageWidth = width;
     scanImageHeight = height;
+    $("#cameraFudaDebug").hidden = true;
+    $("#cameraFudaDebugText").textContent = "";
     const canvas = $("#cameraFudaCanvas");
     canvas.width = width;
     canvas.height = height;
@@ -337,6 +393,8 @@
     $("#cameraFudaRetake").disabled = true;
     $("#cameraFudaResultText").textContent = "まだ札を読み取っていません";
     $("#cameraFudaConfidence").textContent = "";
+    $("#cameraFudaDebug").hidden = true;
+    $("#cameraFudaDebugText").textContent = "";
     $("#cameraFudaOverlay").innerHTML = "";
     setStatus("もう一度カメラを起動するか、写真を選んでください。");
   }
@@ -409,9 +467,14 @@
 
   function collectBlocks(data) {
     const output = [];
-    (data.blocks || []).forEach((block) => {
+    const detected = data.blocks?.length
+      ? data.blocks
+      : data.lines?.length
+        ? data.lines
+        : data.words || [];
+    detected.forEach((block) => {
       const text = block.text || "";
-      if (normalize(text).length < 4 || !block.bbox) return;
+      if (normalize(text).length < 5 || !block.bbox) return;
       output.push({
         text,
         bbox: block.bbox,
@@ -419,6 +482,51 @@
       });
     });
     return output;
+  }
+
+  function makeOcrCanvas(source) {
+    const longestSide = Math.max(source.width, source.height);
+    const scale = Math.min(1.8, 4200 / longestSide);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(source.width * scale));
+    canvas.height = Math.max(1, Math.round(source.height * scale));
+    const context = canvas.getContext("2d");
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.filter = "grayscale(1) contrast(1.4)";
+    context.drawImage(source, 0, 0, canvas.width, canvas.height);
+    context.filter = "none";
+    return canvas;
+  }
+
+  function findMatches(blocks, scaleX = 1, scaleY = 1) {
+    const matched = new Map();
+    blocks.forEach((block) => {
+      const match = matchTextToPoem(block.text);
+      if (!match) return;
+      const bbox = {
+        x0: block.bbox.x0 * scaleX,
+        y0: block.bbox.y0 * scaleY,
+        x1: block.bbox.x1 * scaleX,
+        y1: block.bbox.y1 * scaleY,
+      };
+      const existing = matched.get(match.number);
+      if (!existing) {
+        matched.set(match.number, {
+          id: `ocr-${match.number}`,
+          number: match.number,
+          score: match.score,
+          bbox,
+        });
+      } else {
+        existing.bbox.x0 = Math.min(existing.bbox.x0, bbox.x0);
+        existing.bbox.y0 = Math.min(existing.bbox.y0, bbox.y0);
+        existing.bbox.x1 = Math.max(existing.bbox.x1, bbox.x1);
+        existing.bbox.y1 = Math.max(existing.bbox.y1, bbox.y1);
+        existing.score = Math.max(existing.score, match.score);
+      }
+    });
+    return matched;
   }
 
   async function scanCards() {
@@ -433,22 +541,36 @@
     setStatus("札の文字を読み取っています。");
     try {
       const ocr = await getWorker();
-      const result = await ocr.recognize(canvas, {}, { blocks: true });
-      const blocks = collectBlocks(result.data || {});
-      const matched = new Map();
-      blocks.forEach((block) => {
-        const match = matchTextToPoem(block.text);
-        if (!match) return;
-        const existing = matched.get(match.number);
-        if (!existing || match.score > existing.score) {
-          matched.set(match.number, {
-            id: `ocr-${match.number}`,
-            number: match.number,
-            score: match.score,
-            bbox: block.bbox,
+      const ocrCanvas = makeOcrCanvas(canvas);
+      const result = await ocr.recognize(ocrCanvas, {}, { blocks: true });
+      let blocks = collectBlocks(result.data || {});
+      let matched = findMatches(
+        blocks,
+        canvas.width / ocrCanvas.width,
+        canvas.height / ocrCanvas.height,
+      );
+
+      if (!matched.size) {
+        await ocr.setParameters({
+          tessedit_pageseg_mode: window.Tesseract.PSM.AUTO,
+        });
+        try {
+          const retry = await ocr.recognize(canvas, {}, { blocks: true });
+          blocks = collectBlocks(retry.data || {});
+          matched = findMatches(blocks);
+        } finally {
+          await ocr.setParameters({
+            tessedit_pageseg_mode: window.Tesseract.PSM.SPARSE_TEXT,
           });
         }
-      });
+      }
+
+      $("#cameraFudaDebug").hidden = false;
+      $("#cameraFudaDebugText").textContent =
+        blocks
+          .map((block) => block.text.trim())
+          .filter(Boolean)
+          .join("\n") || "文字として認識できませんでした";
       labels = [...matched.values()];
       drawLabels();
       const confident = labels.filter((label) => label.score >= 0.68).length;
@@ -462,7 +584,7 @@
         );
       } else {
         setStatus(
-          "札を自動認識できませんでした。真上から撮り直すか、写真上でカードを手動追加してください。",
+          "札を特定できませんでした。下の「OCRで読み取った文字を確認」で文字が読めているか確認できます。明るい場所で真上から撮るか、写真上で札を手動追加してください。",
           true,
         );
       }
